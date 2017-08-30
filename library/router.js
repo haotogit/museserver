@@ -2,12 +2,14 @@ const express = require('express');
 const router = express.Router();
 const logger = require('./logger');
 const authHandler = require('./authHandler');
+const userControl = require('../controllers/user');
 
-module.exports.configRoutes = () => {
-  router.all('*', logger);
+router.all('*', logger);
 
-  router.all('*', authHandler);
+router.all('*', authHandler);
 
+//router.post('/users', userControl.createUser);
 
-  return router;
-};
+//router.get('/users/:id', userControl.getUserById);
+
+module.exports = router;

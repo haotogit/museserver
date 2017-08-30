@@ -6,7 +6,7 @@ const router = require('./library/router');
 
 const app = express();
 
-app.use('/api/*', router.configRoutes());
+app.use('/api/v1', router);
 
 app.listen(config.app.port, (err) => {
   if (err) logger.log(`error starting server: ${err}`)

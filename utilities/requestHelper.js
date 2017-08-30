@@ -7,7 +7,7 @@ module.exports = (request) => {
   request.correlationId = correlationId;
 
   return {
-    url,
+    path: url,
     method,
     correlationId
   };
