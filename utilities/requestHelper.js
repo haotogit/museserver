@@ -1,7 +1,14 @@
 const uuid = require('uuid/v4');
 
 module.exports = (request) => {
+  const correlationId = uuid();
   let { url, method } = request;
 
-  return { url, method, correlationId: uuid() };
+  request.correlationId = correlationId;
+
+  return {
+    url,
+    method,
+    correlationId
+  };
 };

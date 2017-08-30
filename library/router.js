@@ -6,7 +6,8 @@ const authHandler = require('./authHandler');
 module.exports.configRoutes = () => {
   router.all('*', logger);
 
-  router.all('/api/*', authHandler);
+  router.all('*', authHandler);
+
 
   return router;
 };
