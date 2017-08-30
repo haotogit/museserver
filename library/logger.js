@@ -10,7 +10,8 @@ module.exports = (req, res, next) => {
       new (winston.transports.Console)({
         timestamp: tsFormat,
         colorize: true,
-        level: config.app.logLevel
+        level: config.app.logLevel,
+        json: true
       })
     ]
   });
