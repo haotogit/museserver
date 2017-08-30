@@ -1,10 +1,12 @@
 const express = require('express');
 const router = express.Router();
+const logger = require('./logger');
+const authHandler = require('./authHandler');
 
 module.exports.configRoutes = () => {
-  router.get('/api/v1', (req, res) => {
-    res.send({watap: 'though'});
-  });
+  router.all('*', logger);
+
+  router.all('/api/*', authHandler);
 
   return router;
 };
