@@ -3,12 +3,5 @@ module.exports = {
     'port': process.env.PORT || 8080,
     'env': process.env.NODE_ENV || 'dev',
     'logLevel': process.env.LOG_LEVEL || 'debug'
-  },
-  'routes': {
-    'users': {
-      'POST': {
-        'args': ['body']
-      }
-    }
   }
 };
