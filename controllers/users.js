@@ -1,4 +1,4 @@
-const userProcessor = require('../processors/user');
+const userProcessor = require('../processors/users');
 
 //module.exports.createUser = (req, res, next) => {
 //  const options = requestOptions(req);
@@ -12,6 +12,10 @@ module.exports.authUser = (req, res) => {
 };
 
 module.exports.createUser = (req, res) => {
-  console.log(req)
-  res.end();
+  const { body } = req;
+
+  userProcessor.createUser(body)
+    .then((obj) => {
+      res.json(obj)
+    });
 };
