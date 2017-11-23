@@ -6,7 +6,12 @@ const userProcessor = require('../processors/user');
 //
 //};
 
-module.exports.getUserById = (req, res, next) => {
-  console.log('wazaaa', req);
+module.exports.authUser = (req, res) => {
+  
+  res.end();
+};
+
+module.exports.createUser = (req, res) => {
+  console.log(req)
   res.end();
 };

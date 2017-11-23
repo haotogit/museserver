@@ -1,9 +1,10 @@
+const uuid = require('uuid/v4');
 const winston = require('winston');
 const config = require('../config/config');
-const requestHelper = require('../utilities/requestHelper');
 
 module.exports = (req, res, next) => {
   const tsFormat = () => (new Date()).toLocaleTimeString();
+  const correlationId = uuid();
 
   const logger = new (winston.Logger)({
     transports: [
@@ -16,7 +17,14 @@ module.exports = (req, res, next) => {
     ]
   });
 
-  logger.info(requestHelper(req));
+  const loggerObj = {
+    path: req.url,
+    method: req.method,
+    correlationId
+  };
+
+  logger.info(loggerObj);
+  req.correlationId = correlationId;
 
   next();
 };
