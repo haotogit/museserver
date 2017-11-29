@@ -5,7 +5,8 @@ const config = require('../config/config');
 mongoose.Promise = bluebird;
 
 module.exports = (() => {
-  const db  = config.app.env === 'dev' ? 'mongodb://localhost/test' : (config.mongoUri || 'mongodb://localhost/express_prod');
+  const dbUri  = config.app.env === 'dev' ? 'mongodb://localhost/test-server' : (config.mongoUri || 'mongodb://localhost/express_prod');
+  let db = {};
 
   const options = {
     useMongoClient: true,
@@ -13,8 +14,15 @@ module.exports = (() => {
     promiseLibrary: bluebird
   };
 
-  mongoose.connection.on('error', console.log);
-  mongoose.connection.on('connected', console.log)
+  db = mongoose.createConnection(dbUri, options);
 
-  return mongoose.createConnection(db, options);
+  db.on('error', (err) => {
+    if (err) throw err;
+  });
+
+  db.once('open', () => {
+    console.log(`Mongo connected to ${db.name} at port ${db.port}`);
+  });
+
+  return db;
 })();

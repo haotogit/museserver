@@ -1,14 +1,16 @@
 const userProcessor = require('../processors/users');
 
-//module.exports.createUser = (req, res, next) => {
-//  const options = requestOptions(req);
-//  userProcessor.createUser
-//
-//};
-
 module.exports.authUser = (req, res) => {
-  
-  res.end();
+  const { body } = req;
+
+  userProcessor.authUser(body)
+    .then((resp) => {
+      res.json(resp);
+    })
+    .catch((err) => {
+      console.log('err', err);
+      res.json(err);
+    })
 };
 
 module.exports.createUser = (req, res) => {

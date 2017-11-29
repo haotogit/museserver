@@ -42,17 +42,14 @@ UserSchema.pre('save', function(next, done) {
   });
 });
 
-// how do you make this work ??
-UserSchema.methods.public = function(cb) {
-  delete this.password
-  return cb(this);
+UserSchema.methods.public = function() {
+  let obj = this;
+  delete obj.password;
+  return obj;
 };
 
 UserSchema.methods.comparePassword = function(password, cb) {
-  bcrypt.compare(password, this.password, function(err, isMatch) {
-    if (err) return cb(err)
-    cb(null, isMatch)
-  });
+  return bcrypt.compare(password, this.password);
 };
 
 const User = conn.model('User', UserSchema);
@@ -61,3 +58,15 @@ module.exports.createUser = (newUser) => {
   const newObj = new User(newUser);
   return newObj.save();
 };
+
+module.exports.authUser = (creds) => User.findOne({ username: creds.username })
+    .then((user) => {
+      if (!user) throw new Error(`Wrong credentials: ${JSON.stringify(creds)}`);
+
+      return user.comparePassword(creds.password)
+        .then((resp) => {
+          if (!resp) throw new Error(`Wrong credentials: ${JSON.stringify(creds)}`);
+
+          return user;
+        });
+    });
