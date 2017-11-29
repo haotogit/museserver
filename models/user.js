@@ -1,15 +1,28 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const bluebird = require('bluebird');
-const conn = require('../utilities/connectDb');
+const jwt = require('jsonwebtoken');
+
+const conn = require('../utilities/connectDb'),
+  config = require('../config/config');
 
 const Schema = mongoose.Schema;
 
 const UserSchema = new Schema({
-  username: { type: String, unique: true, required: true },
-  password: { type: String, required: true },
-  access_token: String,
-  user_type: String,
+  username: { 
+    type: String, 
+    required: true,
+    unique: true, 
+  },
+  password: { 
+    type: String, 
+    required: true,
+  },
+  accessToken: {
+    type: String,
+    required: true,
+  },
+  roles: [String],
   name: String,
   lat: Number,
   long: Number,
@@ -34,6 +47,8 @@ const UserSchema = new Schema({
 UserSchema.pre('save', function(next, done) {
   let user = this;
 
+  console.log(this)
+
   if (!this.isModified('password')) return next();
 
   bcrypt.hash(user.password, 10).then(function(hash) {
@@ -54,9 +69,34 @@ UserSchema.methods.comparePassword = function(password, cb) {
 
 const User = conn.model('User', UserSchema);
 
+function makeTokenObj(newUser) {
+  let obj = {},
+    fields = ['username', 'roles'];
+
+  fields.forEach(field => obj[field] = newUser[field]);
+
+  return obj;
+}
+
 module.exports.createUser = (newUser) => {
-  const newObj = new User(newUser);
-  return newObj.save();
+  let newObj;
+
+  if (!newUser.roles) {
+    newUser.roles = [];
+    newUser.roles.push('user');
+  }
+
+  return new Promise((resolve, reject) => {
+    jwt.sign(makeTokenObj(newUser), config.app.tokenSecret, (err, token) => {
+      if (err) throw reject(err);
+
+      newUser.accessToken = token;
+
+      newObj = new User(newUser);
+
+      return resolve(newObj.save());
+    });
+  });
 };
 
 module.exports.authUser = (creds) => User.findOne({ username: creds.username })
@@ -65,8 +105,9 @@ module.exports.authUser = (creds) => User.findOne({ username: creds.username })
 
       return user.comparePassword(creds.password)
         .then((resp) => {
+          // error not going up ?
           if (!resp) throw new Error(`Wrong credentials: ${JSON.stringify(creds)}`);
 
-          return user;
+          return Promise.resolve(user);
         });
     });

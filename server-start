@@ -1,1 +1,3 @@
+export TOKEN_SECRET=c20171ca-a894-4672-847c-b9bb08b8eac8
+
 npm start

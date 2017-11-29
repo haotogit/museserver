@@ -19,5 +19,9 @@ module.exports.createUser = (req, res) => {
   userProcessor.createUser(body)
     .then((obj) => {
       res.json(obj)
+    })
+    .catch((err) => {
+      console.log('err', err);
+      res.json(err);
     });
 };
