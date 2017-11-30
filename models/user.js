@@ -105,7 +105,6 @@ module.exports.authUser = (creds) => User.findOne({ username: creds.username })
 
       return user.comparePassword(creds.password)
         .then((resp) => {
-          // error not going up ?
           if (!resp) throw new Error(`Wrong credentials: ${JSON.stringify(creds)}`);
 
           return Promise.resolve(user);

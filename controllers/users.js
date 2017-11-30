@@ -8,8 +8,7 @@ module.exports.authUser = (req, res) => {
       res.json(resp);
     })
     .catch((err) => {
-      console.log('err', err);
-      res.json(err);
+      res.json({ error: { message: err.message } });
     })
 };
 
