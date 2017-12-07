@@ -9,7 +9,7 @@ module.exports.authUser = (req, res) => {
     })
     .catch((err) => {
       res.json({ error: { message: err.message } });
-    })
+    });
 };
 
 module.exports.createUser = (req, res) => {
@@ -23,4 +23,10 @@ module.exports.createUser = (req, res) => {
       console.log('err', err);
       res.json(err);
     });
+};
+
+module.exports.updateUser = (req, res) => {
+  const { body, id } = req;
+
+  //userProcessor.updateUser(id, body)
 };

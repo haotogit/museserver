@@ -11,8 +11,7 @@ const Schema = mongoose.Schema;
 const UserSchema = new Schema({
   username: { 
     type: String, 
-    required: true,
-    unique: true, 
+    required: true
   },
   password: { 
     type: String, 
@@ -26,21 +25,10 @@ const UserSchema = new Schema({
   name: String,
   lat: Number,
   long: Number,
-  spotify: {
-    id: String,
-    profile_pic: String,
-    access_token: String,
-    refresh_token: String,
-    artists: Array,
-    genres: Array,
-    top10: Array
-  },
   searchOpts: {
     currSrc: String,
     by: String
   },
-  actvity_id: [{ type: Schema.Types.ObjectId, ref: 'activity' }],
-  notification_id: [{ type: Schema.Types.ObjectId, ref: 'Notification' }],
   events: Array
 }, { timestamps: true })
 
@@ -100,13 +88,15 @@ module.exports.createUser = (newUser) => {
 };
 
 module.exports.authUser = (creds) => User.findOne({ username: creds.username })
-    .then((user) => {
-      if (!user) throw new Error(`Wrong credentials: ${JSON.stringify(creds)}`);
+  .then((user) => {
+    if (!user) throw new Error(`Wrong credentials: ${JSON.stringify(creds)}`);
 
-      return user.comparePassword(creds.password)
-        .then((resp) => {
-          if (!resp) throw new Error(`Wrong credentials: ${JSON.stringify(creds)}`);
+    return user.comparePassword(creds.password)
+      .then((resp) => {
+        if (!resp) throw new Error(`Wrong credentials: ${JSON.stringify(creds)}`);
 
-          return Promise.resolve(user);
-        });
-    });
+        return Promise.resolve(user);
+      });
+  });
+
+module.exports.getUserById = (id) => User.findOne({ _id: id });

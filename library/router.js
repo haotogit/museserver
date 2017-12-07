@@ -13,17 +13,15 @@ module.exports = (() => {
   router.route('/healthcheck')
     .get(serviceController.healthCheck)
 
-  router.route('/users')
+  router.route('/users/:id')
     .post(userController.createUser)
+    .put(userController.updateUser)
 
   router.route('/users/auth')
     .post(userController.authUser)
 
-  //router.get('/', serviceControl.main);
-
-  //router.post('/users', userControl.createUser);
-
-  //router.get('/users/:id', userControl.getUserById);
+  router.route('/users/:id/thirdParty')
+    .post(serviceController.createThirdParty)
 
   return router;
 })();
