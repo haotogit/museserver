@@ -13,12 +13,14 @@ module.exports = (() => {
   router.route('/healthcheck')
     .get(serviceController.healthCheck)
 
-  router.route('/users/:id')
-    .post(userController.createUser)
-    .put(userController.updateUser)
-
   router.route('/users/auth')
     .post(userController.authUser)
+
+  router.route('/users')
+    .post(userController.createUser)
+
+  router.route('/users/:id')
+    .put(userController.updateUser)
 
   router.route('/users/:id/thirdParty')
     .post(serviceController.createThirdParty)

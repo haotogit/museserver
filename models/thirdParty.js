@@ -16,9 +16,14 @@ const ThirdPartySchema = new Schema({
   refresh_token: String,
   artists: Array,
   genres: Array,
-  top10: Array
+  top10: Array,
+  tracks: Array,
 }, { timestamps: true });
 
 const ThirdParty = conn.model('ThirdParty', ThirdPartySchema);
 
-module.exports = ThirdParty;
+module.exports.create = (options) => ThirdParty.create(options);
+
+module.exports.getByUserId = (id) => ThirdParty.find({ userId: id }).exec();
+
+module.exports.getAll = () => ThirdParty.find().exec();

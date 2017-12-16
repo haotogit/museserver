@@ -29,6 +29,7 @@ const UserSchema = new Schema({
     currSrc: String,
     by: String
   },
+  thirdParty: [{ type: Schema.Types.ObjectId, ref: 'ThirdParty' }],
   events: Array
 }, { timestamps: true })
 
@@ -95,8 +96,10 @@ module.exports.authUser = (creds) => User.findOne({ username: creds.username })
       .then((resp) => {
         if (!resp) throw new Error(`Wrong credentials: ${JSON.stringify(creds)}`);
 
-        return Promise.resolve(user);
+        return user;
       });
   });
 
-module.exports.getUserById = (id) => User.findOne({ _id: id });
+module.exports.getById = (id) => User.findOne({ _id: id });
+
+module.exports.getAll = () => User.find();

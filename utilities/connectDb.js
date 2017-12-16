@@ -6,11 +6,10 @@ mongoose.Promise = bluebird;
 
 module.exports = (() => {
   const dbUri  = config.app.env === 'dev' ? 'mongodb://localhost/test-server' : (config.mongoUri || 'mongodb://localhost/express_prod');
-  let db = {};
+  let db;
 
   const options = {
     useMongoClient: true,
-    keepAlive: 1,
     promiseLibrary: bluebird
   };
 
