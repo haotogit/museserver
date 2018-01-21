@@ -12,8 +12,9 @@ const ThirdPartySchema = new Schema({
     required: true
   },
   source: String,
-  access_token: String,
-  refresh_token: String,
+  accessToken: String,
+  refreshToken: String,
+  expiresIn
   artists: Array,
   genres: Array,
   top10: Array,
