@@ -29,7 +29,7 @@ const UserSchema = new Schema({
     currSrc: String,
     by: String
   },
-  thirdParty: [{ type: Schema.Types.ObjectId, ref: 'ThirdParty' }],
+  thirdParties: [{ type: Schema.Types.ObjectId, ref: 'ThirdParty' }],
   events: Array
 }, { timestamps: true })
 
@@ -100,6 +100,6 @@ module.exports.authUser = (creds) => User.findOne({ username: creds.username })
       });
   });
 
-module.exports.getById = (id) => User.findOne({ _id: id });
+module.exports.getById = (id) => User.findOne({ _id: id }).populate('thirdParties');
 
 module.exports.getAll = () => User.find();

@@ -11,7 +11,7 @@ module.exports.healthCheck = (req, res, next) => {
 };
 
 module.exports.createThirdParty = (req, res) => {
-  const newThirdParty = req.body.thirdParty; 
+  const newThirdParty = req.body;
   newThirdParty.userId = req.params.id;
 
   thirdPartyProcessor.createThirdParty(newThirdParty)

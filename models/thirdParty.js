@@ -8,10 +8,10 @@ const Schema = mongoose.Schema;
 const ThirdPartySchema = new Schema({
   userId: {
     type: Schema.Types.ObjectId,
-    ref: 'User'
+    ref: 'User',
+    required: true
   },
   source: String,
-  id: String,
   access_token: String,
   refresh_token: String,
   artists: Array,
