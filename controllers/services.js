@@ -9,16 +9,3 @@ module.exports.healthCheck = (req, res, next) => {
 
   res.json(system);
 };
-
-module.exports.createThirdParty = (req, res) => {
-  const newThirdParty = req.body;
-  newThirdParty.userId = req.params.id;
-
-  thirdPartyProcessor.createThirdParty(newThirdParty)
-    .then((data) => {
-      res.json(data);
-    })
-    .catch(err => {
-      res.json(err);
-    })
-};

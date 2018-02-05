@@ -4,6 +4,7 @@ const logger = require('./logger');
 const authHandler = require('./authHandler');
 const userController = require('../controllers/users');
 const serviceController = require('../controllers/services');
+const thirdPartyController = require('../controllers/thirdParty');
 
 module.exports = (() => {
   router.all('*', logger);
@@ -23,7 +24,11 @@ module.exports = (() => {
     .put(userController.updateUser)
 
   router.route('/users/:id/thirdParty')
-    .post(serviceController.createThirdParty)
+    .post(thirdPartyController.createThirdParty)
+
+  router.route('/users/:id/thirdParty/:thirdPartyId')
+    .delete(thirdPartyController.deleteThirdParty)
+    .put(thirdPartyController.updateThirdParty)
 
   return router;
 })();

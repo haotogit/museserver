@@ -14,7 +14,7 @@ const ThirdPartySchema = new Schema({
   source: String,
   accessToken: String,
   refreshToken: String,
-  expiresIn
+  expiresIn: Number,
   artists: Array,
   genres: Array,
   top10: Array,
@@ -25,6 +25,8 @@ const ThirdParty = conn.model('ThirdParty', ThirdPartySchema);
 
 module.exports.create = (options) => ThirdParty.create(options);
 
-module.exports.getByUserId = (id) => ThirdParty.find({ userId: id }).exec();
+module.exports.getByUserId = (id) => ThirdParty.find({ userId: id }).exec('find');
 
-module.exports.getAll = () => ThirdParty.find().exec();
+module.exports.update = (id, updateInfo) => ThirdParty.findOneAndUpdate({ _id: id }, updateInfo).exec('update');
+
+module.exports.delete = (id) => ThirdParty.findOneAndRemove({ _id: id }).exec();

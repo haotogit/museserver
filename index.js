@@ -7,6 +7,7 @@ const bodyParser = require('body-parser');
 const config = require('./config/config');
 const router = require('./library/router');
 const connectDb = require('./utilities/connectDb');
+//require('./tester');
 
 const app = express();
 

@@ -36,8 +36,6 @@ const UserSchema = new Schema({
 UserSchema.pre('save', function(next, done) {
   let user = this;
 
-  console.log(this)
-
   if (!this.isModified('password')) return next();
 
   bcrypt.hash(user.password, 10).then(function(hash) {
@@ -47,7 +45,7 @@ UserSchema.pre('save', function(next, done) {
 });
 
 UserSchema.methods.public = function() {
-  let obj = this;
+  let obj = Object.assign({}, this.toJSON());
   delete obj.password;
   return obj;
 };
@@ -89,6 +87,7 @@ module.exports.createUser = (newUser) => {
 };
 
 module.exports.authUser = (creds) => User.findOne({ username: creds.username })
+  .populate('thirdParties')
   .then((user) => {
     if (!user) throw new Error(`Wrong credentials: ${JSON.stringify(creds)}`);
 
@@ -96,10 +95,10 @@ module.exports.authUser = (creds) => User.findOne({ username: creds.username })
       .then((resp) => {
         if (!resp) throw new Error(`Wrong credentials: ${JSON.stringify(creds)}`);
 
-        return user;
+        return user.public();
       });
   });
 
-module.exports.getById = (id) => User.findOne({ _id: id }).populate('thirdParties');
+module.exports.getById = (id) => User.findOne({ _id: id }).exec();
 
 module.exports.getAll = () => User.find();
