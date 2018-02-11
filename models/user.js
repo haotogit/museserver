@@ -88,6 +88,12 @@ module.exports.createUser = (newUser) => {
 
 module.exports.authUser = (creds) => User.findOne({ username: creds.username })
   .populate('thirdParties')
+  .populate({
+    path: 'thirdParties',
+    populate: {
+      path: 'artists'
+    }
+  })
   .then((user) => {
     if (!user) throw new Error(`Wrong credentials: ${JSON.stringify(creds)}`);
 

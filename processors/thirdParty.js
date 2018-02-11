@@ -1,5 +1,7 @@
+const promise = require('bluebird');
 const ThirdParty = require('../models/thirdParty'),
-  User = require('../models/user');
+  User = require('../models/user'),
+  Artist = require('../models/artist');
 
 module.exports.createThirdParty = (options) => ThirdParty.create(options)
   .then((thirdParty) => {
@@ -10,7 +12,23 @@ module.exports.createThirdParty = (options) => ThirdParty.create(options)
     });
   });
 
-module.exports.updateThirdParty = (thirdPartyId, updateInfo) => ThirdParty.update(thirdPartyId, updateInfo)
+module.exports.updateThirdParty = (thirdPartyId, updateInfo) => {
+  const updateObj = updateInfo;
+  let currArtists = updateInfo.artists ? updateInfo.artists : [];
+
+  if (currArtists.length !== 0) {
+    return promise.map(currArtists, (artist) => {
+      return Artist.create(artist);
+    }, { concurrency: 1 })
+    .then((results) => {
+      updateObj.artists = results.map((artist) => artist._id);
+
+      return ThirdParty.update(thirdPartyId, updateObj);
+    });
+  }
+  
+  return ThirdParty.update(thirdPartyId, updateInfo);
+};
 
 module.exports.deleteThirdParty = (userId, thirdPartyId) => User.getById(userId).then(user => {
   if (!user) throw new Error(`No user found with id ${userId}`);
