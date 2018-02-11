@@ -3,6 +3,7 @@
 const express = require('express');
 const winston = require('winston');
 const bodyParser = require('body-parser');
+const cors = require('cors');
 
 const config = require('./config/config');
 const router = require('./library/router');
@@ -10,6 +11,8 @@ const connectDb = require('./utilities/connectDb');
 //require('./tester');
 
 const app = express();
+
+app.use(cors());
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
