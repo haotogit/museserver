@@ -2,5 +2,5 @@ runtime: nodejs
 env: flex
 env_variables:
   NODE_ENV: 'prod'
-  MONGO_URI: 'mongodb://<dbuser>:<dbpassword>@ds161410.mlab.com:61410/muse-con'
+  MONGO_URI: 'mongodb://samucapark3000:Star@9807@ds161410.mlab.com:61410/muse-con'
   TOKEN_SECRET: 'c20171ca-a894-4672-847c-b9bb08b8eac8'
