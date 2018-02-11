@@ -1,0 +1,5 @@
+runtime: nodejs
+env: flex
+env_variables:
+  NODE_ENV: 'prod'
+  MONGO_URI: 'mongodb://<dbuser>:<dbpassword>@ds161410.mlab.com:61410/muse-con'
