@@ -28,6 +28,7 @@ module.exports.createUser = (req, res) => {
 module.exports.updateUser = (req, res) => {
   const id = req.params.id,
     body = req.body;
+  console.log('=====', body)
 
   userProcessor.updateUser(id, body)
     .then((resp) => {
