@@ -26,7 +26,14 @@ module.exports.createUser = (req, res) => {
 };
 
 module.exports.updateUser = (req, res) => {
-  const { body, id } = req;
+  const id = req.params.id,
+    body = req.body;
 
-  //userProcessor.updateUser(id, body)
+  userProcessor.updateUser(id, body)
+    .then((resp) => {
+      res.json(resp);
+    })
+    .catch(err => {
+      res.status(err.statusCode || 500).send({ error: err.message });
+    });
 };

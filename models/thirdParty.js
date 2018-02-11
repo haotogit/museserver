@@ -28,7 +28,7 @@ module.exports.getByUserId = (id) => ThirdParty.find({ userId: id }).exec('find'
 
 module.exports.update = (id, updateInfo) => new Promise((resolve, reject) => {
   return ThirdParty.findOneAndUpdate({ _id: id }, updateInfo, (err, result) => {
-    if(err) throw new Error(`error updating thirdparty id: ${id}`)
+    if (err) throw new Error(`error updating thirdparty id: ${id}`)
       resolve(result);
   });
 });

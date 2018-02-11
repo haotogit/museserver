@@ -4,13 +4,13 @@ const ThirdParty = require('../models/thirdParty');
 module.exports.createUser = (newUser) => User.createUser(newUser);
 
 module.exports.authUser = (creds) => User.authUser(creds)
-.then((user) => {
-  return ThirdParty.getByUserId(user._id)
-    .then((data) => {
-      user.thirdParty = data;
+//.then((user) => {
+//  return ThirdParty.getByUserId(user._id)
+//    .then((data) => {
+//      user.thirdParty = data;
+//
+//      return user;
+//    });
+// });
 
-      return user;
-    });
- });
-
-module.exports.updateUser = (id, updateInfo) => {}; 
+module.exports.updateUser = (id, updateInfo) => User.update(id, updateInfo);

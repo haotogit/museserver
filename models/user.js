@@ -107,4 +107,9 @@ module.exports.authUser = (creds) => User.findOne({ username: creds.username })
 
 module.exports.getById = (id) => User.findOne({ _id: id }).exec();
 
+module.exports.update = (id, updateInfo) => User.findOneAndUpdate({ _id: id }, updateInfo, { new: true }).exec()
+  .catch((err) => {
+    throw new Error(`Error updating user error: ${err.message}`);
+  });
+
 module.exports.getAll = () => User.find();
