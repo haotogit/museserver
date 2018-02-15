@@ -1,5 +1,6 @@
 runtime: nodejs
 env: flex
+service: museserver
 env_variables:
   NODE_ENV: 'prod'
   MONGO_URI: 'mongodb://samucapark3000:Star@9807@ds161410.mlab.com:61410/muse-con'
