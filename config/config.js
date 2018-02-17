@@ -1,11 +1,32 @@
 module.exports = (() => {
   const config = {
     app: {
-      port: process.env.PORT || 8087,
       env: process.env.NODE_ENV || 'dev',
       logLevel: process.env.LOG_LEVEL || 'debug',
       tokenSecret: process.env.TOKEN_SECRET || 'asdf',
-      dbConnection: process.env.MONGO_URI
+      dbConnection: process.env.MONGO_URI,
+      host: {
+        protocol: process.env.SERVER_PROTOCOL || 'http',
+        hostname: process.env.SERVER_HOSTNAME || 'localhost',
+        port: process.env.SERVER_PORT || 8087
+      },
+      client: {
+        protocol: process.env.SERVER_PROTOCOL || 'http',
+        hostname: process.env.SERVER_HOSTNAME || 'localhost',
+        port: process.env.SERVER_PORT || 8080
+      }
+    },
+    external: {
+      spotify: {
+        clientId: process.env.SPOTIFY_CLIENT_ID,
+        clientSecret: process.env.SPOTIFY_CLIENT_SECRET,
+        baseUrl: 'https://api.spotify.com/v1',
+        redirectUri: process.env.SPOTIFY_REDIRECT_URI || ''
+      },
+      ticketmaster: {
+        baseUrl: process.env.TICKETMASTER_URL,
+        apiKey: process.env.TICKETMASTER_KEY
+      }
     }
   };
 

@@ -1,8 +1,9 @@
+const tokenCheck = require('./tokenCheck');
+
 module.exports = (req, res, next) => {
-  // if url includes users and method post dont check authorization
-    // next
-  // else check auth token
-    // if success next
-    // else res.end 401 unauthorized
-  next();
+  let token = req.headers && req.headers.authorization ? req.headers.authorization : null;
+
+  tokenCheck(token)
+    .then(result => next())
+    .catch(err => res.status(err.statusCode || 401).send(err.message || 'Error with token validation'));
 };

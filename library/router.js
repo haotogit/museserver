@@ -9,16 +9,24 @@ const thirdPartyController = require('../controllers/thirdParty');
 module.exports = (() => {
   router.all('*', logger);
 
-  router.all('*', authHandler);
-
   router.route('/healthcheck')
     .get(serviceController.healthCheck)
 
   router.route('/users/auth')
+    .get(userController.tokenCheck)
     .post(userController.authUser)
 
   router.route('/users')
     .post(userController.createUser)
+
+  router.route('/authSpotify')
+    .get(thirdPartyController.authSpotify)
+
+  router.route('/authSpotify/callback')
+    .get(thirdPartyController.authSpotifyCb)
+
+  // routes that require authentication below
+  router.all('*', authHandler);
 
   router.route('/users/:id')
     .put(userController.updateUser)

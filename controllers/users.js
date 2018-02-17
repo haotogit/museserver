@@ -28,7 +28,6 @@ module.exports.createUser = (req, res) => {
 module.exports.updateUser = (req, res) => {
   const id = req.params.id,
     body = req.body;
-  console.log('=====', body)
 
   userProcessor.updateUser(id, body)
     .then((resp) => {
@@ -37,4 +36,18 @@ module.exports.updateUser = (req, res) => {
     .catch(err => {
       res.status(err.statusCode || 500).send({ error: err.message });
     });
+};
+
+module.exports.tokenCheck = (req, res) => {
+  let token = req.headers && req.headers.authorization ? req.headers.authorization : null;
+
+  if (token) {
+    userProcessor.tokenCheck(token)
+      .then((user) => {
+        res.json(user);
+      })
+      .catch(err => {
+        res.status(err.statusCode || 500).send({ error: err.message });
+      })
+  }
 };

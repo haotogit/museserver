@@ -1,14 +1,19 @@
 const promise = require('bluebird');
 const ThirdParty = require('../models/thirdParty'),
   User = require('../models/user'),
-  Artist = require('../models/artist');
+  Artist = require('../models/artist'),
+  config = require('../config/config');
+
+const rp = require('request-promise');
 
 module.exports.createThirdParty = (options) => ThirdParty.create(options)
   .then((thirdParty) => {
     return User.getById(thirdParty.userId).then(user => {
       user.thirdParties.push(thirdParty._id);
-      user.save();
-      return user.public();
+      user.save((err, result) => {
+        if (err) throw new Error(err.message);
+        return result.public();
+      });
     });
   });
 
@@ -37,7 +42,39 @@ module.exports.deleteThirdParty = (userId, thirdPartyId) => User.getById(userId)
     .then((deleted) => {
       if (!deleted) throw new Error(`Error deleting thirdparty id ${thirdPartyId}`);
       const index = user.thirdParties.indexOf(thirdPartyId);
-      const u = user.thirdParties.splice(index, 1);
-      return user.save();
+      user.thirdParties.splice(index, 1);
+      user.save((err, result) => {
+        if (err) throw new Error(err.message);
+        return result.public();
+      });
     });
 });
+
+module.exports.authSpotifyCb = (userId, code, state, authParam) => {
+  let authOptions = {
+    method: 'POST',
+    uri: 'https://accounts.spotify.com/api/token',
+    form: {
+      code,
+      redirect_uri: config.external.spotify.redirectUri,
+      grant_type: 'authorization_code'
+    },
+    headers: {
+      'Authorization': `Basic ${authParam}` 
+    }
+  };
+
+  return rp(authOptions)
+    .then((response) => {
+      const { access_token, refresh_token, expires_in } = JSON.parse(response);
+      let thirdPartyOpts = {
+        source: 'spotify',
+        accessToken: access_token,
+        refreshToken: refresh_token,
+        expiresIn: expires_in,
+        userId
+      };
+
+      return exports.createThirdParty(thirdPartyOpts);
+    });
+};

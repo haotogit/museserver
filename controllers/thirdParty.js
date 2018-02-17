@@ -1,5 +1,8 @@
 const user = require('../processors/users');
 const thirdPartyProcessor = require('../processors/thirdParty');
+const config = require('../config/config');
+const urlLib = require('url');
+const qString = require('query-string');
 
 module.exports.createThirdParty = (req, res) => {
   const newThirdParty = req.body;
@@ -33,3 +36,12 @@ module.exports.deleteThirdParty = (req, res) => {
     .catch(err => res.json(err));
 };
 
+module.exports.authSpotifyCb = (req, res) => {
+  const { code, state } = req.query;
+  const authParam = new Buffer(`${config.external.spotify.clientId}:${config.external.spotify.clientSecret}`).toString('base64');
+  const userId = state.split('=')[1];
+
+  thirdPartyProcessor.authSpotifyCb(userId, code, state, authParam)
+    .then(result => res.redirect(urlLib.format(config.app.client)))
+    .catch(err => res.status(err.statusCode || 500).send(err.message));
+};

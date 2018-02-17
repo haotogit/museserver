@@ -23,6 +23,8 @@ module.exports = (req, res, next) => {
     correlationId
   };
 
+  if (req.body) loggerObj.body = req.body;
+
   logger.info(loggerObj);
   req.correlationId = correlationId;
 

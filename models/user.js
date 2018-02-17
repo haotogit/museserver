@@ -20,6 +20,7 @@ const UserSchema = new Schema({
   accessToken: {
     type: String,
     required: true,
+    index: true
   },
   roles: [String],
   name: String,
@@ -58,7 +59,7 @@ const User = conn.model('User', UserSchema);
 
 function makeTokenObj(newUser) {
   let obj = {},
-    fields = ['username', 'roles'];
+    fields = ['username', 'roles', '_id'];
 
   fields.forEach(field => obj[field] = newUser[field]);
 
@@ -74,14 +75,17 @@ module.exports.createUser = (newUser) => {
   }
 
   return new Promise((resolve, reject) => {
-    jwt.sign(makeTokenObj(newUser), config.app.tokenSecret, (err, token) => {
-      if (err) throw reject(err);
+    jwt.sign(makeTokenObj(newUser), config.app.tokenSecret, { expiresIn: '1h' }, (err, token) => {
+      if (err) throw new Error(err.message);
 
       newUser.accessToken = token;
 
       newObj = new User(newUser);
 
-      return resolve(newObj.save());
+      newObj.save((err, result) => {
+        if (err) reject(new Error(`err ${err.message}`));
+        resolve(result.public());
+      });
     });
   });
 };
@@ -101,7 +105,17 @@ module.exports.authUser = (creds) => User.findOne({ username: creds.username })
       .then((resp) => {
         if (!resp) throw new Error(`Wrong credentials: ${JSON.stringify(creds)}`);
 
-        return user.public();
+        return new Promise((resolve, reject) => {
+          jwt.sign(makeTokenObj(user), config.app.tokenSecret, { expiresIn: '1h' }, (err, token) => {
+            if (err) throw new Error(err.message);
+
+            user.accessToken = token;
+            user.save((err, result) => {
+              if (err) reject(new Error(`err ${err.message}`));
+              resolve(result.public())
+            });
+          });
+        });
       });
   });
 
