@@ -19,9 +19,6 @@ module.exports = (() => {
   router.route('/users')
     .post(userController.createUser)
 
-  router.route('/authSpotify')
-    .get(thirdPartyController.authSpotify)
-
   router.route('/authSpotify/callback')
     .get(thirdPartyController.authSpotifyCb)
 
