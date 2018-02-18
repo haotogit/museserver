@@ -74,11 +74,6 @@ module.exports.createUser = (newUser) => {
     newUser.roles.push('user');
   }
 
-  newObj.searchOpts = {
-    currSrc: 'spotify',
-    by: 'artists'
-  }
-
   return new Promise((resolve, reject) => {
     jwt.sign(makeTokenObj(newUser), config.app.tokenSecret, { expiresIn: '1h' }, (err, token) => {
       if (err) throw new Error(err.message);
@@ -86,6 +81,10 @@ module.exports.createUser = (newUser) => {
       newUser.accessToken = token;
 
       newObj = new User(newUser);
+      newObj.searchOpts = {
+        currSrc: 'spotify',
+        by: 'artists'
+      }
 
       newObj.save((err, result) => {
         if (err) reject(new Error(`err ${err.message}`));
