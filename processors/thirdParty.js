@@ -2,7 +2,8 @@ const promise = require('bluebird');
 const ThirdParty = require('../models/thirdParty'),
   User = require('../models/user'),
   Artist = require('../models/artist'),
-  config = require('../config/config');
+  config = require('../config/config'),
+  spotifyResolver = require('../library/spotifyResolver');
 
 const rp = require('request-promise');
 
@@ -76,5 +77,79 @@ module.exports.authSpotifyCb = (userId, code, state, authParam) => {
       };
 
       return exports.createThirdParty(thirdPartyOpts);
+    });
+};
+
+function keyMaker (str) {
+  return str.split(/\-|\s/).length === 1 ? str : str.split(/\-|\s/).map((each, i) => i === 0 ? each : each.replace(each[0], (match) => match.toUpperCase())).join('')
+}
+
+function sortArr (a, b) {
+  if (a.value > b.value) {
+    return -1
+  }
+
+  if (a.value < b.value) {
+    return 1
+  }
+
+  return 0
+}
+
+module.exports.evalSpotify = (id, spotifyObj) => {
+  return User.getById(id)
+    .then(user => {
+      let spotifyOpts = {
+        method: 'GET',
+        uri: 'https://api.spotify.com/v1/me/top/artists?limit=50',
+        headers: {
+          Authorization: `Bearer ${spotifyObj.accessToken}`
+        }
+      };
+
+      return spotifyResolver(spotifyObj, spotifyOpts)
+        .then(data => {
+          let top10;
+          let thirdPartyObj = {};
+          let dataObj = data.items;
+          let genres = [];
+
+          thirdPartyObj.artists = dataObj.map(artist => {
+            let currArtist = {};
+            artist.genres.forEach((each, i) => {
+              let genreKey = keyMaker(each),
+                genre,
+                genreIndex,
+                artistIndex
+
+              if (genres.find((ea) => ea.label === genreKey)) {
+                genreIndex = genres.findIndex((ea) => ea.label === genreKey)
+                genres[genreIndex].value++
+              } else {
+                genre = {
+                  label: genreKey,
+                  value: 1,
+                }
+
+                genres.push(genre);
+              }
+            });
+
+            currArtist = {
+              name: artist.name,
+              genres: artist.genres,
+              image: artist.images,
+              popularity: artist.popularity,
+              externalId: artist.id,
+              externalUri: artist.uri
+            };
+            return currArtist;
+          });
+
+          thirdPartyObj.genres = genres.sort(sortArr);
+          thirdPartyObj.top10 = genres.slice(0, 10)
+
+          return exports.updateThirdParty(spotifyObj._id, thirdPartyObj);
+        })
     });
 };

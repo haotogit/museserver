@@ -74,6 +74,11 @@ module.exports.createUser = (newUser) => {
     newUser.roles.push('user');
   }
 
+  newObj.searchOpts = {
+    currSrc: 'spotify',
+    by: 'artists'
+  }
+
   return new Promise((resolve, reject) => {
     jwt.sign(makeTokenObj(newUser), config.app.tokenSecret, { expiresIn: '1h' }, (err, token) => {
       if (err) throw new Error(err.message);

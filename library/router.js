@@ -35,6 +35,9 @@ module.exports = (() => {
     .delete(thirdPartyController.deleteThirdParty)
     .put(thirdPartyController.updateThirdParty)
 
+  router.route('/users/:id/evalSpotify')
+    .post(thirdPartyController.evalSpotify)
+
   return router;
 })();
 

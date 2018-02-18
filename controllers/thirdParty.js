@@ -45,3 +45,12 @@ module.exports.authSpotifyCb = (req, res) => {
     .then(result => res.redirect(urlLib.format(config.app.client)))
     .catch(err => res.status(err.statusCode || 500).send(err.message));
 };
+
+module.exports.evalSpotify = (req, res) => {
+  const { id } = req.params;
+  const spotifyObj = req.body;
+
+  thirdPartyProcessor.evalSpotify(id, spotifyObj)
+    .then(result => res.json(result))
+    .catch(err => res.status(err.statusCode || 500).send(err.message));
+};
