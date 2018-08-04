@@ -9,7 +9,11 @@ const ArtistSchema = new Schema({
   images: Array,
   genres: Array,
   popularity: Number,
-  externalId: String,
+  externalId: {
+    type: String,
+    index: true,
+    unique: true
+  },
   externalUri: String
 }, { timestamps: true });
 

@@ -29,7 +29,10 @@ module.exports.updateThirdParty = (thirdPartyId, updateInfo) => {
     .then((results) => {
       updateObj.artists = results.map((artist) => artist._id);
 
-      return ThirdParty.update(thirdPartyId, updateObj);
+      return ThirdParty.update(thirdPartyId, updateObj)
+        .then((res) => {
+          console.log("updated", res);
+        })
     });
   }
   
@@ -99,19 +102,30 @@ function sortArr (a, b) {
 module.exports.evalSpotify = (id, spotifyObj) => {
   return User.getById(id)
     .then(user => {
+      let uris = [
+        'https://api.spotify.com/v1/me/top/tracks?limit=50',
+        'https://api.spotify.com/v1/me/top/artists?limit=50'
+      ];
       let spotifyOpts = {
         method: 'GET',
-        uri: 'https://api.spotify.com/v1/me/top/artists?limit=50',
+        uri: '',
         headers: {
           Authorization: `Bearer ${spotifyObj.accessToken}`
-        }
+        },
+        json: true
       };
 
-      return spotifyResolver(spotifyObj, spotifyOpts)
+      let reqOpts = [];
+      for(let i = 0; i < uris.length; i++) {
+        spotifyOpts.uri = uris[i];
+        reqOpts.push(spotifyOpts);
+      }
+
+      return spotifyResolver(spotifyObj, reqOpts)
         .then(data => {
           let top10;
           let thirdPartyObj = {};
-          let dataObj = data.items;
+          let dataObj = data[0].items;
           let genres = [];
 
           thirdPartyObj.artists = dataObj.map(artist => {
@@ -122,22 +136,16 @@ module.exports.evalSpotify = (id, spotifyObj) => {
                 genreIndex,
                 artistIndex
 
-              if (genres.find((ea) => ea.label === genreKey)) {
-                genreIndex = genres.findIndex((ea) => ea.label === genreKey)
-                genres[genreIndex].value++
-              } else {
-                genre = {
-                  label: genreKey,
-                  value: 1,
-                }
-
-                genres.push(genre);
+              if (!genres.find((ea) => ea.label === genreKey)) {
+                genres.push(genreKey);
+                //genreIndex = genres.findIndex((ea) => ea.label === genreKey)
+                //genres[genreIndex].value++
               }
             });
 
             currArtist = {
               name: artist.name,
-              genres: artist.genres,
+              genres: artist.genres ? artist.genres : [],
               image: artist.images,
               popularity: artist.popularity,
               externalId: artist.id,
@@ -150,6 +158,6 @@ module.exports.evalSpotify = (id, spotifyObj) => {
           thirdPartyObj.top10 = genres.slice(0, 10)
 
           return exports.updateThirdParty(spotifyObj._id, thirdPartyObj);
-        })
+        });
     });
 };

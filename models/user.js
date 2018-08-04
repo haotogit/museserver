@@ -19,8 +19,6 @@ const UserSchema = new Schema({
   },
   accessToken: {
     type: String,
-    required: true,
-    index: true
   },
   roles: [String],
   name: String,
@@ -31,8 +29,9 @@ const UserSchema = new Schema({
     by: String
   },
   thirdParties: [{ type: Schema.Types.ObjectId, ref: 'ThirdParty' }],
+  // need to separate as it's own model
   events: Array
-}, { timestamps: true })
+}, { timestamps: true });
 
 UserSchema.pre('save', function(next, done) {
   let user = this;

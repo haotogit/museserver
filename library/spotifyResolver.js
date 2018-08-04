@@ -4,7 +4,7 @@ const urlLib = require('url');
 const config = require('../config/config');
 
 module.exports = (spotifyObj, spotifyOpts) => {
-  let refresherOpts, nextItem, authParam;
+  let refresherOpts, nextItem, authParam, dataObj;
   authParam = new Buffer(`${config.external.spotify.clientId}:${config.external.spotify.clientSecret}`).toString('base64');
   refresherOpts = [
     {
@@ -18,34 +18,41 @@ module.exports = (spotifyObj, spotifyOpts) => {
         refresh_token: spotifyObj.refreshToken
       }
     },
-    spotifyOpts
   ];
 
-  return rp(spotifyOpts)
+  return promise.mapSeries(spotifyOpts, (val) => rp(val))
     .catch(err => {
-      let error = JSON.parse(err.error);
-      if (error.error.message === 'The access token expired') return refresherOpts;
+      let error = err.error;
+      if (error.error.message === 'The access token expired') {
+        spotifyOpts.unshift(refresherOpts);
+        return null;
+      }
       throw new Error(error.error.message);
     })
     .then((res) => {
-      return promise.mapSeries(refresherOpts, (value, i) => {
+      if (res) return res;
+      return promise.mapSeries(spotifyOpts, (value, i) => {
         return rp(value)
           .then((data) => {
-            let parsedData = JSON.parse(data);
             if (i === 0) {
-              nextItem = refresherOpts[++i];
-              nextItem.headers.Authorization = `Bearer ${parsedData.access_token}`;
+              try {
+                dataObj = JSON.parse(data);
+              } catch(e) {
+                dataObj = data;
+              } 
+              do {
+                spotifyOpts[++i].headers.Authorization = `Bearer ${dataObj.access_token}`;
+              } while(i < spotifyOpts.length);
+              //nextItem = refresherOpts[++i];
+              //nextItem.headers.Authorization = `Bearer ${data.access_token}`;
             }
-            return parsedData;
-          });
-      })
-      .then((result) => {
-        // only return original request's response
-        return result[1];
+            return data;
+          })
+          // this is to allow requesting all items, independent of individual responses
+        //.catch(err => new Error(err.message || err));
       })
       .catch(err => {
         throw new Error(err.message);
       });
-    })
-    
+    });
 };
