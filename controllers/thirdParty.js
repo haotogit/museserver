@@ -48,11 +48,10 @@ module.exports.authSpotifyCb = (req, res) => {
 
 module.exports.evalSpotify = (req, res) => {
   const { id } = req.params;
-  const spotifyObj = req.body;
-  thirdPartyProcessor.evalSpotify(id, spotifyObj)
+  thirdPartyProcessor.evalSpotify(id)
     .then(result => res.json(result))
     .catch(err => {
-      console.log("thefuk====", err);
+      console.log('WHATHEFUCK===', err)
       res.status(err.statusCode || 500).send(err.message);
     });
 };

@@ -6,23 +6,22 @@ const config = require('../config/config');
 module.exports = (spotifyObj, spotifyOpts) => {
   let refresherOpts, nextItem, authParam, dataObj;
   authParam = new Buffer(`${config.external.spotify.clientId}:${config.external.spotify.clientSecret}`).toString('base64');
-  refresherOpts = [
-    {
-      method: 'POST',
-      uri: 'https://accounts.spotify.com/api/token',
-      headers: {
-        Authorization: `Basic ${authParam}`
-      },
-      form: {
-        grant_type: 'refresh_token',
-        refresh_token: spotifyObj.refreshToken
-      }
+  refresherOpts = {
+    method: 'POST',
+    uri: 'https://accounts.spotify.com/api/token',
+    headers: {
+      Authorization: `Basic ${authParam}`
     },
-  ];
+    form: {
+      grant_type: 'refresh_token',
+      refresh_token: spotifyObj.refreshToken
+    }
+  };
 
   return promise.mapSeries(spotifyOpts, (val) => rp(val))
     .catch(err => {
       let error = err.error;
+      console.log('error requesting====', error)
       if (error.error.message === 'The access token expired') {
         spotifyOpts.unshift(refresherOpts);
         return null;
@@ -42,15 +41,18 @@ module.exports = (spotifyObj, spotifyOpts) => {
               } 
               do {
                 spotifyOpts[++i].headers.Authorization = `Bearer ${dataObj.access_token}`;
-              } while(i < spotifyOpts.length);
+              } while(i < spotifyOpts.length - 1);
               //nextItem = refresherOpts[++i];
               //nextItem.headers.Authorization = `Bearer ${data.access_token}`;
+              return;
             }
+
             return data;
-          })
+          });
           // this is to allow requesting all items, independent of individual responses
         //.catch(err => new Error(err.message || err));
       })
+      .then(result => result.filter(item => item))
       .catch(err => {
         throw new Error(err.message);
       });

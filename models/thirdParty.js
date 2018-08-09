@@ -15,7 +15,6 @@ const ThirdPartySchema = new Schema({
   accessToken: String,
   refreshToken: String,
   expiresIn: Number,
-  artists: [{ type: Schema.Types.ObjectId, ref: 'Artist' }],
   genres: Array,
   top10: Array,
   tracks: Array,

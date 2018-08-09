@@ -29,6 +29,8 @@ const UserSchema = new Schema({
     by: String
   },
   thirdParties: [{ type: Schema.Types.ObjectId, ref: 'ThirdParty' }],
+  artists: [{ type: Schema.Types.ObjectId, ref: 'Artist' }],
+  tracks: [{ type: Schema.Types.ObjectId, ref: 'Track' }],
   // need to separate as it's own model
   events: Array
 }, { timestamps: true });
@@ -95,12 +97,7 @@ module.exports.createUser = (newUser) => {
 
 module.exports.authUser = (creds) => User.findOne({ username: creds.username })
   .populate('thirdParties')
-  .populate({
-    path: 'thirdParties',
-    populate: {
-      path: 'artists'
-    }
-  })
+  .populate('artists')
   .then((user) => {
     if (!user) throw new Error(`Wrong credentials: ${JSON.stringify(creds)}`);
 
@@ -122,15 +119,12 @@ module.exports.authUser = (creds) => User.findOne({ username: creds.username })
       });
   });
 
-module.exports.getById = (id) => User.findOne({ _id: id }).exec();
+module.exports.getById = (id) => User.findOne({ _id: id })
+  .populate('thirdParties')
+  .exec();
 
 module.exports.update = (id, updateInfo) => User.findOneAndUpdate({ _id: id }, updateInfo, { new: true }).populate('thirdParties')
-  .populate({
-    path: 'thirdParties',
-    populate: {
-      path: 'artists'
-    }
-  }).exec()
+  .populate('artists').exec()
   .catch((err) => {
     throw new Error(`Error updating user error: ${err.message}`);
   });

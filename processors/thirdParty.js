@@ -2,6 +2,8 @@ const promise = require('bluebird');
 const ThirdParty = require('../models/thirdParty'),
   User = require('../models/user'),
   Artist = require('../models/artist'),
+  Genre = require('../models/genre'),
+  Track = require('../models/track'),
   config = require('../config/config'),
   spotifyResolver = require('../library/spotifyResolver');
 
@@ -18,26 +20,7 @@ module.exports.createThirdParty = (options) => ThirdParty.create(options)
     });
   });
 
-module.exports.updateThirdParty = (thirdPartyId, updateInfo) => {
-  const updateObj = updateInfo;
-  let currArtists = updateInfo.artists ? updateInfo.artists : [];
-
-  if (currArtists.length !== 0) {
-    return promise.map(currArtists, (artist) => {
-      return Artist.create(artist);
-    }, { concurrency: 1 })
-    .then((results) => {
-      updateObj.artists = results.map((artist) => artist._id);
-
-      return ThirdParty.update(thirdPartyId, updateObj)
-        .then((res) => {
-          console.log("updated", res);
-        })
-    });
-  }
-  
-  return ThirdParty.update(thirdPartyId, updateInfo);
-};
+module.exports.updateThirdParty = (thirdPartyId, updateInfo) => ThirdParty.update(thirdPartyId, updateInfo);
 
 module.exports.deleteThirdParty = (userId, thirdPartyId) => User.getById(userId).then(user => {
   if (!user) throw new Error(`No user found with id ${userId}`);
@@ -99,65 +82,121 @@ function sortArr (a, b) {
   return 0
 }
 
-module.exports.evalSpotify = (id, spotifyObj) => {
+module.exports.evalSpotify = (id) => {
   return User.getById(id)
     .then(user => {
-      let uris = [
-        'https://api.spotify.com/v1/me/top/tracks?limit=50',
-        'https://api.spotify.com/v1/me/top/artists?limit=50'
-      ];
-      let spotifyOpts = {
-        method: 'GET',
-        uri: '',
-        headers: {
-          Authorization: `Bearer ${spotifyObj.accessToken}`
+      let spotifyObj, spotifyOpts, reqOpts;
+      let domains = {
+        artists: {
+          uri:'https://api.spotify.com/v1/me/top/artists?limit=50',
+          fields: [
+            'name',
+            'images',
+            'popularity',
+            'externalId',
+            'externalUri'
+          ]
         },
-        json: true
+        tracks: {
+          uri: 'https://api.spotify.com/v1/me/top/tracks?limit=50',
+          fields: [
+            'name',
+            'popularity',
+            'externalId',
+            'externalUri'
+          ]
+        }
       };
 
-      let reqOpts = [];
-      for(let i = 0; i < uris.length; i++) {
-        spotifyOpts.uri = uris[i];
-        reqOpts.push(spotifyOpts);
-      }
+      spotifyObj = user.thirdParties[0];
+      
 
-      return spotifyResolver(spotifyObj, reqOpts)
-        .then(data => {
+      let parsers = {
+        artists: (data, userId) => {
           let top10;
-          let thirdPartyObj = {};
-          let dataObj = data[0].items;
+          let dataObj = data.items;
           let genres = [];
-
-          thirdPartyObj.artists = dataObj.map(artist => {
+          return promise.mapSeries(dataObj, (artist) => {
             let currArtist = {};
-            artist.genres.forEach((each, i) => {
+            return promise.mapSeries(artist.genres, (each, i) => {
               let genreKey = keyMaker(each),
                 genre,
                 genreIndex,
                 artistIndex
 
-              if (!genres.find((ea) => ea.label === genreKey)) {
-                genres.push(genreKey);
+              genre = {
+                name: genreKey,
+                userId: userId
+              }
+              return Genre.create(genre)
+                .catch(err => console.log('error creating genre', err.message));
                 //genreIndex = genres.findIndex((ea) => ea.label === genreKey)
                 //genres[genreIndex].value++
-              }
+            })
+            .then((resp) => {
+              currArtist = {
+                name: artist.name,
+                genres: resp.map(items => items._id),
+                image: artist.images,
+                popularity: artist.popularity,
+                externalId: artist.id,
+                externalUri: artist.uri,
+                userId: userId
+              };
+
+              return Artist.create(currArtist)
+                .then(res => res._id)
+                .catch(err => console.log('error creating artist', err.message));
             });
-
-            currArtist = {
-              name: artist.name,
-              genres: artist.genres ? artist.genres : [],
-              image: artist.images,
-              popularity: artist.popularity,
-              externalId: artist.id,
-              externalUri: artist.uri
-            };
-            return currArtist;
           });
+          //thirdPartyObj.genres = genres;
+          // needs to be moved as virtual;
+          //thirdPartyObj.top10 = genres.slice(0, 10)
+        },
+        tracks: (data, userId) => {
+          let respObj = {};
+          return promise.mapSeries(data.items, (item, i) => {
+            let j = 0;
+            let currFields = domains.tracks.fields;
+            while(j < currFields.length - 1) {
+              respObj[currFields[j]] = item[currFields[i]];
+              j++;
+            }
+            respObj.userId = userId;
 
-          thirdPartyObj.genres = genres.sort(sortArr);
-          thirdPartyObj.top10 = genres.slice(0, 10)
+            return Track.create(respObj)
+              .then(res => res._id)
+              .catch(err => console.log('error creating track', err.message));
+          });
+        }
+      };
+      reqOpts = [];
 
-          return exports.updateThirdParty(spotifyObj._id, thirdPartyObj);
+      Object.keys(domains).forEach(each => {
+        reqOpts.push({
+          method: 'GET',
+          uri: domains[each].uri,
+          headers: {
+            Authorization: `Bearer ${spotifyObj.accessToken}`
+          },
+          json: true
+        });
+      });
+
+      let domainsIndex = Object.keys(domains);
+
+      return spotifyResolver(spotifyObj, reqOpts)
+        .then(data => {
+          let userObj = {};
+          return promise.mapSeries(data, (dataObj, i) => {
+            return parsers[domainsIndex[i]](dataObj, user._id)
+              .then((result) => userObj[domainsIndex[i]] = result)
+              .catch(err => new Error(err.message));
+          })
+          .then((result) => {
+            console.log('thefukk=====', result)
+            return User.update(user._id, userObj);
+          });
         });
     });
 };
