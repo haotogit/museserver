@@ -1,7 +1,4 @@
 const mongoose = require('mongoose');
-
-const conn = require('../utilities/connectDb');
-
 const Schema = mongoose.Schema;
 
 const ThirdPartySchema = new Schema({
@@ -18,7 +15,7 @@ const ThirdPartySchema = new Schema({
   top10: Array,
 }, { timestamps: true });
 
-const ThirdParty = conn.model('ThirdParty', ThirdPartySchema);
+const ThirdParty = mongoose.model('ThirdParty', ThirdPartySchema);
 
 module.exports.create = (options) => ThirdParty.create(options);
 

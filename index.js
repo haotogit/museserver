@@ -18,8 +18,12 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 app.use('/api/v1', router);
 
-app.listen(config.app.host.port, (err) => {
-  if (err) logger.log(`error starting server: ${err}`)
+connectDb()
+  .then((db) => {
+    app.listen(config.app.host.port, (err) => {
+      if (err) logger.log(`error starting server: ${err}`)
 
-  winston.info(`Server started and listening at ${config.app.host.port}`);
-}); 
+      winston.info(`Server started and listening at ${config.app.host.port}`);
+    }); 
+  })
+  .catch(err => winston.error(`Error initializing server ${err.message || err}`);

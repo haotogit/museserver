@@ -102,7 +102,7 @@ UserSchema.pre('findOne', function(next) {
   next();
 });
 
-const User = conn.model('User', UserSchema);
+const User = mongoose.model('User', UserSchema);
 
 function makeTokenObj(newUser) {
   let obj = {},

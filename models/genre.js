@@ -1,6 +1,4 @@
 const mongoose = require('mongoose');
-const promise = require('bluebird');
-
 const conn = require('../utilities/connectDb'),
   config = require('../config/config');
 
@@ -26,6 +24,6 @@ const GenreSchema = new Schema({
   }
 }, { timestamps: true });
 
-const Genre = conn.model('Genre', GenreSchema);
+const Genre = mongoose.model('Genre', GenreSchema);
 
 module.exports.create = (options) => Genre.create(options);

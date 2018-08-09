@@ -1,7 +1,4 @@
 const mongoose = require('mongoose');
-
-const conn = require('../utilities/connectDb');
-
 const Schema = mongoose.Schema;
 
 const ArtistSchema = new Schema({
@@ -35,6 +32,6 @@ ArtistSchema.virtual('genres', {
   foreignField: 'artistId'
 });
 
-const Artist = conn.model('Artist', ArtistSchema);
+const Artist = mongoose.model('Artist', ArtistSchema);
 
 module.exports.create = (newArtist) => Artist.create(newArtist);
