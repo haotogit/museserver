@@ -1,4 +1,4 @@
-const user = require('../processors/users');
+const user = require('../processors/user');
 const thirdPartyProcessor = require('../processors/thirdParty');
 const config = require('../config/config');
 const urlLib = require('url');

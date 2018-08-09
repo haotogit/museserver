@@ -11,7 +11,6 @@ const GenreSchema = new Schema({
     type: String,
     required: true,
     index: true,
-    unique: true
   },
   userId: {
     type: Schema.Types.ObjectId,

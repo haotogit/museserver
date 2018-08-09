@@ -17,7 +17,6 @@ const ArtistSchema = new Schema({
   externalId: {
     type: String,
     index: true,
-    unique: true
   },
   externalUri: String
 }, { 

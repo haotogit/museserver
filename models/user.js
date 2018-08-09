@@ -53,15 +53,29 @@ UserSchema.virtual('tracks', {
   foreignField: 'userId'
 });
 
-//UserSchema.virtual('genres', {
-//  ref: 'Genre',
-//  localField: '_id',
-//  foreignField: 'userId'
-//});
+UserSchema.virtual('genres', {
+  ref: 'Genre',
+  localField: '_id',
+  foreignField: 'userId'
+});
+
+function mapGenres(genres) {
+  let i = 0, j, aggregated = {};
+  while(i < genres.length) {
+    let key = genres[i].name;
+    if (aggregated[key]) aggregated[key]++;
+    else aggregated[key] = 1;
+    i++;
+  }
+  return aggregated;
+}
 
 UserSchema.methods.public = function() {
   let obj = Object.assign({}, this.toJSON());
   delete obj.password;
+  // temp couldn't get a virtual to work or maybe 
+  // needs to hook another way;
+  if (obj.genres) obj.genres = mapGenres(obj.genres);
   return obj;
 };
 
@@ -82,8 +96,8 @@ UserSchema.pre('save', function(next) {
 
 UserSchema.pre('findOne', function(next) {
   this.populate('thirdParties');
-  this.populate({ path: 'artists', populate: { path: 'genres' } });
-  //this.populate('genres');
+  this.populate('artists');
+  this.populate('genres');
   this.populate('tracks');
   next();
 });
@@ -142,14 +156,16 @@ module.exports.authUser = (creds) => User.findOne({ username: creds.username })
             user.accessToken = token;
             user.save((err, result) => {
               if (err) reject(new Error(`err ${err.message}`));
-              resolve(result.public())
+              resolve(result.public());
             });
           });
         });
       });
   });
 
-module.exports.getById = (id) => User.findOne({ _id: id }).exec();
+module.exports.getById = (id) => User.findOne({ _id: id })
+  .exec()
+  .then(user => user.public())
 
 module.exports.update = (id, updateInfo) => User.findOneAndUpdate({ _id: id }, updateInfo, { new: true }).populate('thirdParties').exec();
 

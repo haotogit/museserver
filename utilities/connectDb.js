@@ -22,6 +22,7 @@ module.exports = (() => {
   db.once('open', () => {
     console.log(`Mongo connected to ${db.name} at port ${db.port}`);
   });
+  console.log('thefuk', db)
 
   return db;
 })();

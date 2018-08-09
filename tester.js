@@ -1,6 +1,6 @@
 const User = require('./models/user');
 
-User.getById('5b6b8811744172dcb30cdc11')
+User.getById('5b6bb71cfb732207e048f87b')
   .then(user => {
     console.log('tellllll==', user);
   })

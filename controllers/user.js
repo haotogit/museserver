@@ -1,4 +1,4 @@
-const userProcessor = require('../processors/users');
+const userProcessor = require('../processors/user');
 
 module.exports.authUser = (req, res) => {
   const { body } = req;
