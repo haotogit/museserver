@@ -15,15 +15,13 @@ app.use(cors());
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
-
 app.use('/api/v1', router);
 
 connectDb()
-  .then((db) => {
+  .then(() => {
     app.listen(config.app.host.port, (err) => {
       if (err) logger.log(`error starting server: ${err}`)
-
       winston.info(`Server started and listening at ${config.app.host.port}`);
     }); 
   })
-  .catch(err => winston.error(`Error initializing server ${err.message || err}`);
+  .catch(err => winston.error(`Error initializing db ${err.message || err}`));

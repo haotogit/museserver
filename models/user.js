@@ -3,8 +3,7 @@ const bcrypt = require('bcrypt');
 const bluebird = require('bluebird');
 const jwt = require('jsonwebtoken');
 
-const conn = require('../utilities/connectDb'),
-  config = require('../config/config');
+const config = require('../config/config');
 
 const Schema = mongoose.Schema;
 
@@ -115,7 +114,6 @@ function makeTokenObj(newUser) {
 
 module.exports.createUser = (newUser) => {
   let newObj;
-
   if (!newUser.roles) {
     newUser.roles = [];
     newUser.roles.push('user');
@@ -123,7 +121,7 @@ module.exports.createUser = (newUser) => {
 
   return new Promise((resolve, reject) => {
     jwt.sign(makeTokenObj(newUser), config.app.tokenSecret, { expiresIn: '1h' }, (err, token) => {
-      if (err) throw new Error(err.message);
+      if (err) reject(new Error(err.message));
 
       newUser.accessToken = token;
 
