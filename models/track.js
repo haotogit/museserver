@@ -9,6 +9,7 @@ const Schema = mongoose.Schema;
 const TrackSchema = new Schema({
   name: {
     type: String,
+    required: true,
   },
   userId: {
     type: Schema.Types.ObjectId,

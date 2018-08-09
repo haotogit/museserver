@@ -3,8 +3,11 @@ const promise = require('bluebird');
 const urlLib = require('url');
 const config = require('../config/config');
 
+const tpProcessor = require('../processors/thirdParty');
+
 module.exports = (spotifyObj, spotifyOpts) => {
-  let refresherOpts, nextItem, authParam, dataObj;
+  let refresherOpts, nextItem, authParam, dataObj,
+    updateObj, error;
   authParam = new Buffer(`${config.external.spotify.clientId}:${config.external.spotify.clientSecret}`).toString('base64');
   refresherOpts = {
     method: 'POST',
@@ -20,7 +23,7 @@ module.exports = (spotifyObj, spotifyOpts) => {
 
   return promise.mapSeries(spotifyOpts, (val) => rp(val))
     .catch(err => {
-      let error = err.error;
+      error = err.error;
       console.log('error requesting====', error)
       if (error.error.message === 'The access token expired') {
         spotifyOpts.unshift(refresherOpts);
@@ -44,13 +47,17 @@ module.exports = (spotifyObj, spotifyOpts) => {
               } while(i < spotifyOpts.length - 1);
               //nextItem = refresherOpts[++i];
               //nextItem.headers.Authorization = `Bearer ${data.access_token}`;
-              return;
+              updateObj = {
+                accessToken: dataObj.access_token,
+                refreshToken: dataObj.refresh_token
+              };
+
+              return tpProcessor.updateThirdParty(spotifyObj._id, updateObj)
+                .then(() => null);
             }
 
             return data;
           });
-          // this is to allow requesting all items, independent of individual responses
-        //.catch(err => new Error(err.message || err));
       })
       .then(result => result.filter(item => item))
       .catch(err => {

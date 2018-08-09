@@ -29,22 +29,35 @@ const UserSchema = new Schema({
     by: String
   },
   thirdParties: [{ type: Schema.Types.ObjectId, ref: 'ThirdParty' }],
-  artists: [{ type: Schema.Types.ObjectId, ref: 'Artist' }],
-  tracks: [{ type: Schema.Types.ObjectId, ref: 'Track' }],
   // need to separate as it's own model
   events: Array
-}, { timestamps: true });
-
-UserSchema.pre('save', function(next, done) {
-  let user = this;
-
-  if (!this.isModified('password')) return next();
-
-  bcrypt.hash(user.password, 10).then(function(hash) {
-    user.password = hash;
-    next();
-  });
+}, { 
+  timestamps: true,
+  toJSON: {
+    virtuals: true 
+  },
+  toObject: {
+    virtuals: true
+  }
 });
+
+UserSchema.virtual('artists', {
+  ref: 'Artist',
+  localField: '_id',
+  foreignField: 'userId'
+});
+
+UserSchema.virtual('tracks', {
+  ref: 'Track',
+  localField: '_id',
+  foreignField: 'userId'
+});
+
+//UserSchema.virtual('genres', {
+//  ref: 'Genre',
+//  localField: '_id',
+//  foreignField: 'userId'
+//});
 
 UserSchema.methods.public = function() {
   let obj = Object.assign({}, this.toJSON());
@@ -55,6 +68,25 @@ UserSchema.methods.public = function() {
 UserSchema.methods.comparePassword = function(password, cb) {
   return bcrypt.compare(password, this.password);
 };
+
+UserSchema.pre('save', function(next) {
+  let user = this;
+
+  if (!this.isModified('password')) return next();
+
+  bcrypt.hash(user.password, 10).then(function(hash) {
+    user.password = hash;
+    next();
+  });
+});
+
+UserSchema.pre('findOne', function(next) {
+  this.populate('thirdParties');
+  this.populate({ path: 'artists', populate: { path: 'genres' } });
+  //this.populate('genres');
+  this.populate('tracks');
+  next();
+});
 
 const User = conn.model('User', UserSchema);
 
@@ -96,8 +128,6 @@ module.exports.createUser = (newUser) => {
 };
 
 module.exports.authUser = (creds) => User.findOne({ username: creds.username })
-  .populate('thirdParties')
-  .populate('artists')
   .then((user) => {
     if (!user) throw new Error(`Wrong credentials: ${JSON.stringify(creds)}`);
 
@@ -119,14 +149,8 @@ module.exports.authUser = (creds) => User.findOne({ username: creds.username })
       });
   });
 
-module.exports.getById = (id) => User.findOne({ _id: id })
-  .populate('thirdParties')
-  .exec();
+module.exports.getById = (id) => User.findOne({ _id: id }).exec();
 
-module.exports.update = (id, updateInfo) => User.findOneAndUpdate({ _id: id }, updateInfo, { new: true }).populate('thirdParties')
-  .populate('artists').exec()
-  .catch((err) => {
-    throw new Error(`Error updating user error: ${err.message}`);
-  });
+module.exports.update = (id, updateInfo) => User.findOneAndUpdate({ _id: id }, updateInfo, { new: true }).populate('thirdParties').exec();
 
 module.exports.getAll = () => User.find();

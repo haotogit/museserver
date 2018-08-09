@@ -11,10 +11,17 @@ const GenreSchema = new Schema({
     type: String,
     required: true,
     index: true,
+    unique: true
   },
   userId: {
     type: Schema.Types.ObjectId,
     ref: 'User',
+    required: true,
+    index: true
+  },
+  artistId: {
+    type: Schema.Types.ObjectId,
+    ref: 'Artist',
     required: true,
     index: true
   }

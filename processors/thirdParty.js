@@ -83,95 +83,93 @@ function sortArr (a, b) {
 }
 
 module.exports.evalSpotify = (id) => {
+  let spotifyObj, spotifyOpts, reqOpts,
+    domainsIndex;
+  let domains = {
+    artists: {
+      uri:'https://api.spotify.com/v1/me/top/artists?limit=50',
+      fields: [
+        'name',
+        'images',
+        'popularity',
+        'externalId',
+        'externalUri'
+      ]
+    },
+    tracks: {
+      uri: 'https://api.spotify.com/v1/me/top/tracks?limit=50',
+      fields: [
+        'name',
+        'popularity',
+        'externalId',
+        'externalUri'
+      ]
+    }
+  };
+
+  let parsers = {
+    artists: (data, userId) => {
+      let top10;
+      let dataObj = data.items;
+      let genres = [];
+      return promise.mapSeries(dataObj, (artist) => {
+        let currArtist = {};
+        currArtist = {
+            name: artist.name,
+            images: artist.images,
+            popularity: artist.popularity,
+            externalId: artist.id,
+            externalUri: artist.uri,
+            userId: userId
+          };
+
+          return Artist.create(currArtist)
+            .then(res => {
+              return promise.mapSeries(artist.genres, (each, i) => {
+                let genreKey = keyMaker(each),
+                  genre,
+                  genreIndex,
+                  artistIndex
+
+                genre = {
+                  name: genreKey,
+                  userId: userId,
+                  artistId: res._id
+                }
+
+                return Genre.create(genre)
+                  .catch(err => console.log('error creating genre', err.message));
+              });
+            })
+            .catch(err => console.log('error creating artist', err.message));
+      });
+      //thirdPartyObj.genres = genres;
+      // needs to be moved as virtual;
+      //thirdPartyObj.top10 = genres.slice(0, 10)
+    },
+    tracks: (data, userId) => {
+      let respObj = {};
+      return promise.mapSeries(data.items, (item, i) => {
+        let j = 0;
+        let currFields = domains.tracks.fields;
+        while(j < currFields.length - 1) {
+          let normalKey = currFields[j].replace(/external/, '');
+          respObj[currFields[j]] = item[/external/.test(currFields[j]) ? normalKey : currFields[j]];
+          j++;
+        }
+
+        respObj.userId = userId;
+        return Track.create(respObj)
+          .then(res => res._id)
+          .catch(err => console.log('error creating track', err.message));
+      });
+    }
+  };
+
   return User.getById(id)
     .then(user => {
-      let spotifyObj, spotifyOpts, reqOpts;
-      let domains = {
-        artists: {
-          uri:'https://api.spotify.com/v1/me/top/artists?limit=50',
-          fields: [
-            'name',
-            'images',
-            'popularity',
-            'externalId',
-            'externalUri'
-          ]
-        },
-        tracks: {
-          uri: 'https://api.spotify.com/v1/me/top/tracks?limit=50',
-          fields: [
-            'name',
-            'popularity',
-            'externalId',
-            'externalUri'
-          ]
-        }
-      };
-
       spotifyObj = user.thirdParties[0];
-      
-
-      let parsers = {
-        artists: (data, userId) => {
-          let top10;
-          let dataObj = data.items;
-          let genres = [];
-          return promise.mapSeries(dataObj, (artist) => {
-            let currArtist = {};
-            return promise.mapSeries(artist.genres, (each, i) => {
-              let genreKey = keyMaker(each),
-                genre,
-                genreIndex,
-                artistIndex
-
-              genre = {
-                name: genreKey,
-                userId: userId
-              }
-              return Genre.create(genre)
-                .catch(err => console.log('error creating genre', err.message));
-                //genreIndex = genres.findIndex((ea) => ea.label === genreKey)
-                //genres[genreIndex].value++
-            })
-            .then((resp) => {
-              currArtist = {
-                name: artist.name,
-                genres: resp.map(items => items._id),
-                image: artist.images,
-                popularity: artist.popularity,
-                externalId: artist.id,
-                externalUri: artist.uri,
-                userId: userId
-              };
-
-              return Artist.create(currArtist)
-                .then(res => res._id)
-                .catch(err => console.log('error creating artist', err.message));
-            });
-          });
-          //thirdPartyObj.genres = genres;
-          // needs to be moved as virtual;
-          //thirdPartyObj.top10 = genres.slice(0, 10)
-        },
-        tracks: (data, userId) => {
-          let respObj = {};
-          return promise.mapSeries(data.items, (item, i) => {
-            let j = 0;
-            let currFields = domains.tracks.fields;
-            while(j < currFields.length - 1) {
-              respObj[currFields[j]] = item[currFields[i]];
-              j++;
-            }
-            respObj.userId = userId;
-
-            return Track.create(respObj)
-              .then(res => res._id)
-              .catch(err => console.log('error creating track', err.message));
-          });
-        }
-      };
       reqOpts = [];
-
       Object.keys(domains).forEach(each => {
         reqOpts.push({
           method: 'GET',
@@ -183,19 +181,13 @@ module.exports.evalSpotify = (id) => {
         });
       });
 
-      let domainsIndex = Object.keys(domains);
-
+      domainsIndex = Object.keys(domains);
       return spotifyResolver(spotifyObj, reqOpts)
         .then(data => {
           let userObj = {};
           return promise.mapSeries(data, (dataObj, i) => {
             return parsers[domainsIndex[i]](dataObj, user._id)
-              .then((result) => userObj[domainsIndex[i]] = result)
               .catch(err => new Error(err.message));
-          })
-          .then((result) => {
-            console.log('thefukk=====', result)
-            return User.update(user._id, userObj);
           });
         });
     });

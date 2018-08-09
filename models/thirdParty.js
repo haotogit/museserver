@@ -15,9 +15,7 @@ const ThirdPartySchema = new Schema({
   accessToken: String,
   refreshToken: String,
   expiresIn: Number,
-  genres: Array,
   top10: Array,
-  tracks: Array,
 }, { timestamps: true });
 
 const ThirdParty = conn.model('ThirdParty', ThirdPartySchema);

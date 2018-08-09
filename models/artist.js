@@ -12,8 +12,7 @@ const ArtistSchema = new Schema({
     index: true
   },
   name: String,
-  images: Array,
-  genres: [{ type: Schema.Types.ObjectId, ref: 'Artist' }],
+  images: [Schema.Types.Mixed],
   popularity: Number,
   externalId: {
     type: String,
@@ -21,7 +20,21 @@ const ArtistSchema = new Schema({
     unique: true
   },
   externalUri: String
-}, { timestamps: true });
+}, { 
+  timestamps: true,
+  toJSON: {
+    virtuals: true 
+  },
+  toObject: {
+    virtuals: true
+  }
+});
+
+ArtistSchema.virtual('genres', {
+  ref: 'Genre',
+  localField: '_id',
+  foreignField: 'artistId'
+});
 
 const Artist = conn.model('Artist', ArtistSchema);
 

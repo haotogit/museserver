@@ -1,6 +1,6 @@
 const User = require('./models/user');
 
-User.authUser({ username: 'barry', password: 'password' })
+User.getById('5b6b8811744172dcb30cdc11')
   .then(user => {
     console.log('tellllll==', user);
   })
