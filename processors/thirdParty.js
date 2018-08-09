@@ -11,7 +11,7 @@ const rp = require('request-promise');
 
 module.exports.createThirdParty = (options) => ThirdParty.create(options)
   .then((thirdParty) => {
-    return User.getById(thirdParty.userId).then(user => {
+    return User.getByIdRaw(thirdParty.userId).then(user => {
       user.thirdParties.push(thirdParty._id);
       user.save((err, result) => {
         if (err) throw new Error(err.message);

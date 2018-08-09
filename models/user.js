@@ -59,14 +59,31 @@ UserSchema.virtual('genres', {
 });
 
 function mapGenres(genres) {
-  let i = 0, j, aggregated = {};
+  let i = 0, j, aggregated = {},
+    total = genres.length;
   while(i < genres.length) {
     let key = genres[i].name;
-    if (aggregated[key]) aggregated[key]++;
-    else aggregated[key] = 1;
+    if (aggregated[key]) {
+      aggregated[key].factor++;
+    } else {
+      aggregated[key] = {};
+      aggregated[key].factor = 1;
+    }
+
+    aggregated[key].percent = parseFloat(aggregated[key].factor / total).toFixed(2) * 100;
     i++;
   }
-  return aggregated;
+  return Object.keys(aggregated).map(key => {
+    return {
+      name: key,
+      percent: aggregated[key].percent,
+    }
+  })
+  .sort((a, b) => {
+    if (a.percent < b.percent) return 1;
+    else if (a.percent > b.percent) return -1;
+    return 0;
+  });
 }
 
 UserSchema.methods.public = function() {
@@ -93,6 +110,7 @@ UserSchema.pre('save', function(next) {
   });
 });
 
+// need to change this... was lazy
 UserSchema.pre('findOne', function(next) {
   this.populate('thirdParties');
   this.populate('artists');
@@ -163,7 +181,9 @@ module.exports.authUser = (creds) => User.findOne({ username: creds.username })
 
 module.exports.getById = (id) => User.findOne({ _id: id })
   .exec()
-  .then(user => user.public())
+  .then(user => user.public());
+
+module.exports.getByIdRaw = (id) => User.findOne({ _id: id }).exec();
 
 module.exports.update = (id, updateInfo) => User.findOneAndUpdate({ _id: id }, updateInfo, { new: true }).populate('thirdParties').exec();
 
