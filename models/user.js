@@ -58,11 +58,25 @@ UserSchema.virtual('genres', {
   foreignField: 'userId'
 });
 
-function mapGenres(genres) {
-  let i = 0, j, aggregated = {},
-    total = genres.length;
-  while(i < genres.length) {
-    let key = genres[i].name;
+function mapListItem(type, list) {
+  let i = 0, j, newObj, aggregated = {},
+    total = type === 'genres' ? 50 : list.length;
+  let dict = {
+    genres: {
+      fields: ['name', 'pct'],
+      sorter: 'pct'
+    },
+    artists: {
+      fields: ['name', 'factor'],
+      sorter: 'factor'
+    },
+    tracks: {
+      fields: ['factor'],
+      sorter: 'factor'
+    }
+  };
+  while(i < list.length) {
+    let key = list[i].name;
     if (aggregated[key]) {
       aggregated[key].factor++;
     } else {
@@ -70,18 +84,25 @@ function mapGenres(genres) {
       aggregated[key].factor = 1;
     }
 
-    aggregated[key].percent = parseFloat(aggregated[key].factor / total).toFixed(2) * 100;
+    aggregated[key]['pct'] = parseFloat(aggregated[key].factor / total).toFixed(3) * 100;
     i++;
   }
+
   return Object.keys(aggregated).map(key => {
-    return {
-      name: key,
-      percent: aggregated[key].percent,
+    j = 0;
+    newObj = {};
+    while(j < dict[type].fields.length) {
+      let currFields = dict[type].fields;
+      newObj[currFields[j]] = aggregated[key][currFields[j]];
+      j++;
     }
+
+    newObj.name = key;
+    return newObj;
   })
   .sort((a, b) => {
-    if (a.percent < b.percent) return 1;
-    else if (a.percent > b.percent) return -1;
+    if (a[dict[type].sorter] < b[dict[type].sorter]) return 1;
+    else if (a[dict[type].sorter] > b[dict[type].sorter]) return -1;
     return 0;
   });
 }
@@ -91,7 +112,9 @@ UserSchema.methods.public = function() {
   delete obj.password;
   // temp couldn't get a virtual to work or maybe 
   // needs to hook another way;
-  if (obj.genres) obj.genres = mapGenres(obj.genres);
+  if (obj.genres) obj.genres = mapListItem('genres', obj.genres).splice(0, 50);
+  if (obj.artists) obj.artists = mapListItem('artists', obj.artists);
+  if (obj.tracks) obj.tracks = mapListItem('tracks', obj.tracks);
   return obj;
 };
 
