@@ -1,5 +1,5 @@
 const user = require('../processors/user');
-const thirdPartyProcessor = require('../processors/thirdParty');
+const thirdPartyProcessor = require('../processors/third-party');
 const config = require('../config/config');
 const urlLib = require('url');
 const qString = require('query-string');

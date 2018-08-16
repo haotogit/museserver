@@ -1,5 +1,5 @@
 const promise = require('bluebird');
-const ThirdParty = require('../models/thirdParty'),
+const ThirdParty = require('../models/third-party'),
   User = require('../models/user'),
   Artist = require('../models/artist'),
   Genre = require('../models/genre'),

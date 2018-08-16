@@ -4,7 +4,7 @@ const logger = require('./logger');
 const authHandler = require('./authHandler');
 const userController = require('../controllers/user');
 const serviceController = require('../controllers/service');
-const thirdPartyController = require('../controllers/thirdParty');
+const thirdPartyController = require('../controllers/third-party');
 
 module.exports = (() => {
   router.all('*', logger);

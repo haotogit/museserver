@@ -3,7 +3,7 @@ const promise = require('bluebird');
 const urlLib = require('url');
 const config = require('../config/config');
 
-const tpProcessor = require('../processors/thirdParty');
+const tpProcessor = require('../processors/third-party');
 
 module.exports = (spotifyObj, spotifyOpts) => {
   let refresherOpts, nextItem, authParam, dataObj,
