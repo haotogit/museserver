@@ -53,7 +53,12 @@ module.exports.authSpotifyCb = (userId, code, state, authParam) => {
 
   return rp(authOptions)
     .then((response) => {
-      const { access_token, refresh_token, expires_in } = JSON.parse(response);
+      try {
+        const { access_token, refresh_token, expires_in } = JSON.parse(response);
+      } catch(e) {
+        throw new Error(e.message || 'Error authenticating spotify');
+      }
+
       let thirdPartyOpts = {
         source: 'spotify',
         accessToken: access_token,
