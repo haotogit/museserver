@@ -110,16 +110,35 @@ function mapListItem(type, list) {
 UserSchema.methods.public = function() {
   let obj = Object.assign({}, this.toJSON());
   delete obj.password;
-  // temp couldn't get a virtual to work or maybe 
-  // needs to hook another way;
-  if (obj.genres) obj.genres = mapListItem('genres', obj.genres).splice(0, 50);
-  if (obj.artists) obj.artists = mapListItem('artists', obj.artists);
-  if (obj.tracks) obj.tracks = mapListItem('tracks', obj.tracks);
   return obj;
 };
 
 UserSchema.methods.comparePassword = function(password, cb) {
   return bcrypt.compare(password, this.password);
+};
+
+UserSchema.methods.makeProfile = function() {
+  let regx, lastIndex, key, arr;
+  this.genres = this.genres && this.genres.length !== 0 ? mapListItem('genres', this.genres).splice(0, 50) : null;
+  this.artists = this.artists && this.artists.length !== 0 ? mapListItem('artists', this.artists) : null;
+  this.tracks = this.tracks && this.tracks.length !== 0 ? mapListItem('tracks', this.tracks) : null;
+  return this;
+};
+
+// this didn't work... booohooo
+UserSchema.methods.loadProfile = function(filter) {
+  console.log('filter===', filter)
+  let arr, prevIndex, key;
+  let regx = RegExp(':', 'g');
+  while((arr = regx.exec(filter)) !== null) {
+    key = prevIndex ? 
+      filter.substring(prevIndex, arr.index) : filter.substring(0, arr.index);
+    prevIndex = arr.index+1;
+    console.log('key===', key)
+    this.populate(key);
+  }
+    console.log('this===', this)
+  return this;
 };
 
 UserSchema.pre('save', function(next) {
@@ -134,13 +153,13 @@ UserSchema.pre('save', function(next) {
 });
 
 // need to change this... was lazy
-UserSchema.pre('findOne', function(next) {
-  this.populate('thirdParties');
-  this.populate('artists');
-  this.populate('genres');
-  this.populate('tracks');
-  next();
-});
+//UserSchema.pre('findOne', function(next) {
+//  //this.populate('thirdParties');
+//  //this.populate('artists');
+//  //this.populate('genres');
+//  //this.populate('tracks');
+//  next();
+//});
 
 const User = mongoose.model('User', UserSchema);
 
@@ -202,12 +221,33 @@ module.exports.authUser = (creds) => User.findOne({ username: creds.username })
       });
   });
 
-module.exports.getById = (id) => User.findOne({ _id: id })
-  .exec()
+module.exports.getById = (id, opts) => User.findOne({ _id: id }).exec()
   .then(user => user.public());
 
 module.exports.getByIdRaw = (id) => User.findOne({ _id: id }).exec();
 
-module.exports.update = (id, updateInfo) => User.findOneAndUpdate({ _id: id }, updateInfo, { new: true }).populate('thirdParties').exec();
+module.exports.update = (id, updateInfo) => User.findOneAndUpdate({ _id: id }, updateInfo, { new: true }).exec();
 
 module.exports.getAll = () => User.find();
+
+module.exports.withProfile = (id, filter) => {
+  let query, regx, prevIndex, arr;
+    query = User.findOne({ _id: id });
+    regx = RegExp(':', 'g');
+  let models = ['thirdParties', 'artists', 'genres', 'tracks'];
+  if (filter === 'all') {
+    for(let i = 0; i < models.length; i++) {
+      query.populate(models[i]);
+    }
+  } else {
+    while((arr = regx.exec(filter)) !== null) {
+      key = prevIndex ? 
+        filter.substring(prevIndex, arr.index) : filter.substring(0, arr.index);
+      prevIndex = arr.index+1;
+      query.populate(key);
+    }
+  }
+
+  return query.exec()
+    .then(user => user.makeProfile(filter));
+}

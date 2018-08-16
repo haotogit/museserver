@@ -5,13 +5,14 @@ const ThirdParty = require('../models/third-party'),
   Genre = require('../models/genre'),
   Track = require('../models/track'),
   config = require('../config/config'),
-  spotifyResolver = require('../library/spotifyResolver');
+  spotifyResolver = require('../library/spotifyResolver'),
+  helpers = require('../library/tools');
 
 const rp = require('request-promise');
 
 module.exports.createThirdParty = (options) => ThirdParty.create(options)
   .then((thirdParty) => {
-    return User.getByIdRaw(thirdParty.userId).then(user => {
+    return User.withProfile(thirdParty.userId, 'thirdParties:').then(user => {
       user.thirdParties.push(thirdParty._id);
       user.save((err, result) => {
         if (err) throw new Error(err.message);
@@ -22,7 +23,7 @@ module.exports.createThirdParty = (options) => ThirdParty.create(options)
 
 module.exports.updateThirdParty = (thirdPartyId, updateInfo) => ThirdParty.update(thirdPartyId, updateInfo);
 
-module.exports.deleteThirdParty = (userId, thirdPartyId) => User.getById(userId).then(user => {
+module.exports.deleteThirdParty = (userId, thirdPartyId) => User.withProfile(userId, 'thirdParties:').then(user => {
   if (!user) throw new Error(`No user found with id ${userId}`);
 
   return ThirdParty.delete(thirdPartyId)
@@ -71,22 +72,6 @@ module.exports.authSpotifyCb = (userId, code, state, authParam) => {
     });
 };
 
-function keyMaker (str) {
-  return str.split(/\-|\s/).length === 1 ? str : str.split(/\-|\s/).map((each, i) => i === 0 ? each : each.replace(each[0], (match) => match.toUpperCase())).join('')
-}
-
-function sortArr (a, b) {
-  if (a.value > b.value) {
-    return -1
-  }
-
-  if (a.value < b.value) {
-    return 1
-  }
-
-  return 0
-}
-
 module.exports.evalSpotify = (id) => {
   let spotifyObj, spotifyOpts, reqOpts,
     domainsIndex;
@@ -131,7 +116,7 @@ module.exports.evalSpotify = (id) => {
           return Artist.create(currArtist)
             .then(res => {
               return promise.mapSeries(artist.genres, (each, i) => {
-                let genreKey = keyMaker(each),
+                let genreKey = /-|\s/.test(each) ? tools.keyToUpperCase(each) : each,
                   genre,
                   genreIndex,
                   artistIndex
@@ -171,7 +156,7 @@ module.exports.evalSpotify = (id) => {
     }
   };
 
-  return User.getById(id)
+  return User.withProfile(id, 'thirdParties:artists:genres:tracks:')
     .then(user => {
       spotifyObj = user.thirdParties[0];
       reqOpts = [];

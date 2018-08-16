@@ -12,3 +12,5 @@ module.exports.updateUser = (id, updateInfo) => User.update(id, updateInfo);
 
 module.exports.tokenCheck = (token) => tokenCheck(token)
   .then(data => User.getById(data._id));
+
+module.exports.getProfile = (id, accessList) => User.withProfile(id, accessList);

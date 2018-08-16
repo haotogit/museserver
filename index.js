@@ -12,13 +12,11 @@ const connectDb = require('./utilities/connectDb');
 const app = express();
 
 app.use(cors());
-
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use('/api/v1', router);
-
 connectDb()
   .then(() => {
+    app.use('/api/v1', router);
     app.listen(config.app.host.port, (err) => {
       if (err) logger.log(`error starting server: ${err}`)
       winston.info(`Server started and listening at ${config.app.host.port}`);

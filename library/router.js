@@ -26,6 +26,7 @@ module.exports = (() => {
   router.all('*', authHandler);
 
   router.route('/users/:id')
+    .get(userController.getProfile)
     .put(userController.updateUser)
 
   router.route('/users/:id/thirdParty')

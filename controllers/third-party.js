@@ -51,7 +51,6 @@ module.exports.evalSpotify = (req, res) => {
   thirdPartyProcessor.evalSpotify(id)
     .then(result => res.json(result))
     .catch(err => {
-      console.log('WHATHEFUCK===', err)
       res.status(err.statusCode || 500).send(err.message);
     });
 };

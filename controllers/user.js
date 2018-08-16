@@ -51,3 +51,14 @@ module.exports.tokenCheck = (req, res) => {
       })
   }
 };
+
+module.exports.getProfile = (req, res) => {
+  const { id } = req.params;
+  const { accessList } = req.query;
+
+  userProcessor.getProfile(id, accessList)
+    .then(resp => res.json(resp))
+    .catch(err => {
+      res.status(err.statusCode || 500).send({ error: err.message });
+    });
+}
