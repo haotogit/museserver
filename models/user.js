@@ -76,7 +76,7 @@ function mapListItem(type, list) {
       sorter: 'factor'
     },
     tracks: {
-      fields: ['factor', 'createdAt', 'updatedAt'],
+      fields: ['name', 'factor', 'createdAt', 'updatedAt'],
       sorter: 'factor'
     }
   };
