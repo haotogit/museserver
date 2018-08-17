@@ -27,7 +27,6 @@ const UserSchema = new Schema({
     currSrc: String,
     by: String
   },
-  thirdParties: [{ type: Schema.Types.ObjectId, ref: 'ThirdParty' }],
   // need to separate as it's own model
   events: Array
 }, { 
@@ -58,23 +57,30 @@ UserSchema.virtual('genres', {
   foreignField: 'userId'
 });
 
+UserSchema.virtual('thirdParties', {
+  ref: 'ThirdParty',
+  localField: '_id',
+  foreignField: 'userId'
+});
+
 function mapListItem(type, list) {
   let i = 0, j, newObj, aggregated = {},
-    total = type === 'genres' ? 50 : list.length;
+    total = list.length;
   let dict = {
     genres: {
-      fields: ['name', 'pct'],
-      sorter: 'pct'
+      fields: ['name', 'factor', 'createdAt', 'updatedAt'],
+      sorter: 'factor'
     },
     artists: {
-      fields: ['name', 'factor'],
+      fields: ['name', 'factor', 'createdAt', 'updatedAt'],
       sorter: 'factor'
     },
     tracks: {
-      fields: ['factor'],
+      fields: ['factor', 'createdAt', 'updatedAt'],
       sorter: 'factor'
     }
   };
+
   while(i < list.length) {
     let key = list[i].name;
     if (aggregated[key]) {
@@ -84,7 +90,7 @@ function mapListItem(type, list) {
       aggregated[key].factor = 1;
     }
 
-    aggregated[key]['pct'] = parseFloat(aggregated[key].factor / total).toFixed(3) * 100;
+    aggregated[key]['pct'] = parseFloat(aggregated[key].factor / total).toFixed(1) * 10;
     i++;
   }
 

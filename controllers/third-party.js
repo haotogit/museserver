@@ -43,7 +43,10 @@ module.exports.authSpotifyCb = (req, res) => {
 
   thirdPartyProcessor.authSpotifyCb(userId, code, state, authParam)
     .then(result => res.redirect(urlLib.format(config.app.client)))
-    .catch(err => res.status(err.statusCode || 500).send(err.message));
+    .catch(err => {
+      console.log('whatthefukkk', err)
+      res.status(err.statusCode || 500).send(err.message)
+    });
 };
 
 module.exports.evalSpotify = (req, res) => {
@@ -51,6 +54,7 @@ module.exports.evalSpotify = (req, res) => {
   thirdPartyProcessor.evalSpotify(id)
     .then(result => res.json(result))
     .catch(err => {
+      console.log('whatthefukkk', err)
       res.status(err.statusCode || 500).send(err.message);
     });
 };

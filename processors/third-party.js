@@ -11,15 +11,7 @@ const ThirdParty = require('../models/third-party'),
 const rp = require('request-promise');
 
 module.exports.createThirdParty = (options) => ThirdParty.create(options)
-  .then((thirdParty) => {
-    return User.withProfile(thirdParty.userId, 'thirdParties:').then(user => {
-      user.thirdParties.push(thirdParty._id);
-      user.save((err, result) => {
-        if (err) throw new Error(err.message);
-        return result.public();
-      });
-    });
-  });
+  .then((thirdParty) => User.withProfile(thirdParty.userId, 'thirdParties:').then(user => user.public()));
 
 module.exports.updateThirdParty = (thirdPartyId, updateInfo) => ThirdParty.update(thirdPartyId, updateInfo);
 
@@ -55,16 +47,16 @@ module.exports.authSpotifyCb = (userId, code, state, authParam) => {
   return rp(authOptions)
     .then((response) => {
       try {
-        const { access_token, refresh_token, expires_in } = JSON.parse(response);
+        response = JSON.parse(response);
       } catch(e) {
-        throw new Error(e.message || 'Error authenticating spotify');
+        console.log('errored while formatting rp req', e);
       }
 
       let thirdPartyOpts = {
         source: 'spotify',
-        accessToken: access_token,
-        refreshToken: refresh_token,
-        expiresIn: expires_in,
+        accessToken: response.access_token,
+        refreshToken: response.refresh_token,
+        expiresIn: response.expires_in,
         userId
       };
 
@@ -83,8 +75,30 @@ module.exports.evalSpotify = (id) => {
         'images',
         'popularity',
         'externalId',
-        'externalUri'
-      ]
+        'externalUri',
+        'genres'
+      ],
+      creator: (dataObj, userId) => {
+        const genres = dataObj.genres;
+        delete dataObj.genres;
+        return Artist.create(dataObj)
+          .then(res => promise.mapSeries(genres, (each, i) => {
+            let genreKey = /-|\s/.test(each) ? helpers.keyToUpperCase(each) : each,
+              genre,
+              genreIndex,
+              artistIndex;
+            genre = {
+              name: genreKey,
+              userId: res.userId,
+              artistId: res._id
+            }
+
+            // take this out eventually
+            return Genre.create(genre)
+              .catch(err => console.log('error creating genre', err.message));
+          }))
+          .catch(err => console.log('error creating artist', err.message))
+      }
     },
     tracks: {
       uri: 'https://api.spotify.com/v1/me/top/tracks?limit=50',
@@ -93,74 +107,20 @@ module.exports.evalSpotify = (id) => {
         'popularity',
         'externalId',
         'externalUri'
-      ]
+      ],
+      creator: (data) => Track.create(data)
+        .then(res => res._id)
+        .catch(err => console.log('error creating track', err.message))
     }
   };
 
-  let parsers = {
-    artists: (data, userId) => {
-      let top10;
-      let dataObj = data.items;
-      let genres = [];
-      return promise.mapSeries(dataObj, (artist) => {
-        let currArtist = {};
-        currArtist = {
-            name: artist.name,
-            images: artist.images,
-            popularity: artist.popularity,
-            externalId: artist.id,
-            externalUri: artist.uri,
-            userId: userId
-          };
-
-          return Artist.create(currArtist)
-            .then(res => {
-              return promise.mapSeries(artist.genres, (each, i) => {
-                let genreKey = /-|\s/.test(each) ? tools.keyToUpperCase(each) : each,
-                  genre,
-                  genreIndex,
-                  artistIndex
-
-                genre = {
-                  name: genreKey,
-                  userId: userId,
-                  artistId: res._id
-                }
-
-                return Genre.create(genre)
-                  .catch(err => console.log('error creating genre', err.message));
-              });
-            })
-            .catch(err => console.log('error creating artist', err.message));
-      });
-      //thirdPartyObj.genres = genres;
-      // needs to be moved as virtual;
-      //thirdPartyObj.top10 = genres.slice(0, 10)
-    },
-    tracks: (data, userId) => {
-      let respObj = {};
-      return promise.mapSeries(data.items, (item, i) => {
-        let j = 0;
-        let currFields = domains.tracks.fields;
-        while(j < currFields.length - 1) {
-          let normalKey = currFields[j].replace(/external/, '');
-          respObj[currFields[j]] = item[/external/.test(currFields[j]) ? normalKey : currFields[j]];
-          j++;
-        }
-
-        respObj.userId = userId;
-        return Track.create(respObj)
-          .then(res => res._id)
-          .catch(err => console.log('error creating track', err.message));
-      });
-    }
-  };
-
-  return User.withProfile(id, 'thirdParties:artists:genres:tracks:')
+  domainsIndex = Object.keys(domains);
+  return User.withProfile(id, 'thirdParties:')
     .then(user => {
+      let currUser = user;
       spotifyObj = user.thirdParties[0];
       reqOpts = [];
-      Object.keys(domains).forEach(each => {
+      domainsIndex.forEach(each => {
         reqOpts.push({
           method: 'GET',
           uri: domains[each].uri,
@@ -171,14 +131,26 @@ module.exports.evalSpotify = (id) => {
         });
       });
 
-      domainsIndex = Object.keys(domains);
       return spotifyResolver(spotifyObj, reqOpts)
         .then(data => {
-          let userObj = {};
           return promise.mapSeries(data, (dataObj, i) => {
-            return parsers[domainsIndex[i]](dataObj, user._id)
-              .catch(err => new Error(err.message));
+            let currFields = domains[domainsIndex[i]].fields;
+            return promise.mapSeries(dataObj.items, (item, j) => {
+              let newObj = {};
+              let x = 0;
+              while(x < currFields.length) {
+                newObj[currFields[x]] = item[currFields[x].replace(/external/, '').toLowerCase()];
+                x++;
+              }
+
+              newObj.userId = user._id;
+              return domains[domainsIndex[i]].creator(newObj);
+            });
           });
         });
+    })
+    .then(() => {
+      return User.withProfile(id, 'thirdParties:artists:genres:tracks:')
+        .then(user => user.makeProfile().public())
     });
 };

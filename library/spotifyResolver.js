@@ -24,7 +24,6 @@ module.exports = (spotifyObj, spotifyOpts) => {
   return promise.mapSeries(spotifyOpts, (val) => rp(val))
     .catch(err => {
       error = err.error;
-      console.log('error requesting====', error)
       if (error.error.message === 'The access token expired') {
         spotifyOpts.unshift(refresherOpts);
         return null;
@@ -41,19 +40,21 @@ module.exports = (spotifyObj, spotifyOpts) => {
                 dataObj = JSON.parse(data);
               } catch(e) {
                 dataObj = data;
-              } 
+              }
+
               do {
                 spotifyOpts[++i].headers.Authorization = `Bearer ${dataObj.access_token}`;
               } while(i < spotifyOpts.length - 1);
-              //nextItem = refresherOpts[++i];
-              //nextItem.headers.Authorization = `Bearer ${data.access_token}`;
               updateObj = {
                 accessToken: dataObj.access_token,
                 refreshToken: dataObj.refresh_token
               };
 
               return tpProcessor.updateThirdParty(spotifyObj._id, updateObj)
-                .then(() => null);
+                .then((res) => {
+                  console.log('updated?==', res)
+                  return null;
+                });
             }
 
             return data;
