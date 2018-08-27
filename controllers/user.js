@@ -8,7 +8,7 @@ module.exports.authUser = (req, res) => {
       res.json(resp);
     })
     .catch((err) => {
-      res.json({ error: { message: err.message } });
+      res.status(err.statusCode || 500).json({ error: { message: err.message } });
     });
 };
 
