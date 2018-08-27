@@ -46,10 +46,11 @@ module.exports = (spotifyObj, spotifyOpts) => {
                 spotifyOpts[++i].headers.Authorization = `Bearer ${dataObj.access_token}`;
               } while(i < spotifyOpts.length - 1);
               updateObj = {
-                accessToken: dataObj.access_token,
-                refreshToken: dataObj.refresh_token
+                accessToken: dataObj.access_token
               };
 
+              // something is setting refreshtoken to null.. is it after a refresh it returns null for refreshToken ?
+              if (dataObj.refresh_token) updateObj.refreshToken = dataObj.refresh_token;
               return tpProcessor.updateThirdParty(spotifyObj._id, updateObj)
                 .then((res) => {
                   console.log('updated?==', res)
