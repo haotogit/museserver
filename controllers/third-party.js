@@ -1,5 +1,5 @@
-const user = require('../processors/users');
-const thirdPartyProcessor = require('../processors/thirdParty');
+const user = require('../processors/user');
+const thirdPartyProcessor = require('../processors/third-party');
 const config = require('../config/config');
 const urlLib = require('url');
 const qString = require('query-string');
@@ -43,14 +43,18 @@ module.exports.authSpotifyCb = (req, res) => {
 
   thirdPartyProcessor.authSpotifyCb(userId, code, state, authParam)
     .then(result => res.redirect(urlLib.format(config.app.client)))
-    .catch(err => res.status(err.statusCode || 500).send(err.message));
+    .catch(err => {
+      console.log('whatthefukkk', err)
+      res.status(err.statusCode || 500).send(err.message)
+    });
 };
 
 module.exports.evalSpotify = (req, res) => {
   const { id } = req.params;
-  const spotifyObj = req.body;
-
-  thirdPartyProcessor.evalSpotify(id, spotifyObj)
+  thirdPartyProcessor.evalSpotify(id)
     .then(result => res.json(result))
-    .catch(err => res.status(err.statusCode || 500).send(err.message));
+    .catch(err => {
+      console.log('whatthefukkk', err)
+      res.status(err.statusCode || 500).send(err.message);
+    });
 };

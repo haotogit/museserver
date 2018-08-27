@@ -3,8 +3,7 @@ const bcrypt = require('bcrypt');
 const bluebird = require('bluebird');
 const jwt = require('jsonwebtoken');
 
-const conn = require('../utilities/connectDb'),
-  config = require('../config/config');
+const config = require('../config/config');
 
 const Schema = mongoose.Schema;
 
@@ -19,8 +18,6 @@ const UserSchema = new Schema({
   },
   accessToken: {
     type: String,
-    required: true,
-    index: true
   },
   roles: [String],
   name: String,
@@ -30,20 +27,91 @@ const UserSchema = new Schema({
     currSrc: String,
     by: String
   },
-  thirdParties: [{ type: Schema.Types.ObjectId, ref: 'ThirdParty' }],
+  // need to separate as it's own model
   events: Array
-}, { timestamps: true })
-
-UserSchema.pre('save', function(next, done) {
-  let user = this;
-
-  if (!this.isModified('password')) return next();
-
-  bcrypt.hash(user.password, 10).then(function(hash) {
-    user.password = hash;
-    next();
-  });
+}, { 
+  timestamps: true,
+  toJSON: {
+    virtuals: true 
+  },
+  toObject: {
+    virtuals: true
+  }
 });
+
+UserSchema.virtual('artists', {
+  ref: 'Artist',
+  localField: '_id',
+  foreignField: 'userId'
+});
+
+UserSchema.virtual('tracks', {
+  ref: 'Track',
+  localField: '_id',
+  foreignField: 'userId'
+});
+
+UserSchema.virtual('genres', {
+  ref: 'Genre',
+  localField: '_id',
+  foreignField: 'userId'
+});
+
+UserSchema.virtual('thirdParties', {
+  ref: 'ThirdParty',
+  localField: '_id',
+  foreignField: 'userId'
+});
+
+function mapListItem(type, list) {
+  let i = 0, j, newObj, aggregated = {},
+    total = list.length;
+  let dict = {
+    genres: {
+      fields: ['name', 'factor', 'createdAt', 'updatedAt'],
+      sorter: 'factor'
+    },
+    artists: {
+      fields: ['name', 'factor', 'createdAt', 'updatedAt'],
+      sorter: 'factor'
+    },
+    tracks: {
+      fields: ['name', 'factor', 'createdAt', 'updatedAt'],
+      sorter: 'factor'
+    }
+  };
+
+  while(i < list.length) {
+    let key = list[i].name;
+    if (aggregated[key]) {
+      aggregated[key].factor++;
+    } else {
+      aggregated[key] = {};
+      aggregated[key].factor = 1;
+    }
+
+    aggregated[key]['pct'] = parseFloat(aggregated[key].factor / total).toFixed(1) * 10;
+    i++;
+  }
+
+  return Object.keys(aggregated).map(key => {
+    j = 0;
+    newObj = {};
+    while(j < dict[type].fields.length) {
+      let currFields = dict[type].fields;
+      newObj[currFields[j]] = aggregated[key][currFields[j]];
+      j++;
+    }
+
+    newObj.name = key;
+    return newObj;
+  })
+  .sort((a, b) => {
+    if (a[dict[type].sorter] < b[dict[type].sorter]) return 1;
+    else if (a[dict[type].sorter] > b[dict[type].sorter]) return -1;
+    return 0;
+  });
+}
 
 UserSchema.methods.public = function() {
   let obj = Object.assign({}, this.toJSON());
@@ -55,7 +123,51 @@ UserSchema.methods.comparePassword = function(password, cb) {
   return bcrypt.compare(password, this.password);
 };
 
-const User = conn.model('User', UserSchema);
+UserSchema.methods.makeProfile = function() {
+  let regx, lastIndex, key, arr;
+  this.genres = this.genres && this.genres.length !== 0 ? mapListItem('genres', this.genres).splice(0, 50) : null;
+  this.artists = this.artists && this.artists.length !== 0 ? mapListItem('artists', this.artists) : null;
+  this.tracks = this.tracks && this.tracks.length !== 0 ? mapListItem('tracks', this.tracks) : null;
+  return this;
+};
+
+// this didn't work... booohooo
+UserSchema.methods.loadProfile = function(filter) {
+  console.log('filter===', filter)
+  let arr, prevIndex, key;
+  let regx = RegExp(':', 'g');
+  while((arr = regx.exec(filter)) !== null) {
+    key = prevIndex ? 
+      filter.substring(prevIndex, arr.index) : filter.substring(0, arr.index);
+    prevIndex = arr.index+1;
+    console.log('key===', key)
+    this.populate(key);
+  }
+    console.log('this===', this)
+  return this;
+};
+
+UserSchema.pre('save', function(next) {
+  let user = this;
+
+  if (!this.isModified('password')) return next();
+
+  bcrypt.hash(user.password, 10).then(function(hash) {
+    user.password = hash;
+    next();
+  });
+});
+
+// need to change this... was lazy
+//UserSchema.pre('findOne', function(next) {
+//  //this.populate('thirdParties');
+//  //this.populate('artists');
+//  //this.populate('genres');
+//  //this.populate('tracks');
+//  next();
+//});
+
+const User = mongoose.model('User', UserSchema);
 
 function makeTokenObj(newUser) {
   let obj = {},
@@ -68,7 +180,6 @@ function makeTokenObj(newUser) {
 
 module.exports.createUser = (newUser) => {
   let newObj;
-
   if (!newUser.roles) {
     newUser.roles = [];
     newUser.roles.push('user');
@@ -76,7 +187,7 @@ module.exports.createUser = (newUser) => {
 
   return new Promise((resolve, reject) => {
     jwt.sign(makeTokenObj(newUser), config.app.tokenSecret, { expiresIn: '1h' }, (err, token) => {
-      if (err) throw new Error(err.message);
+      if (err) reject(new Error(err.message));
 
       newUser.accessToken = token;
 
@@ -95,13 +206,6 @@ module.exports.createUser = (newUser) => {
 };
 
 module.exports.authUser = (creds) => User.findOne({ username: creds.username })
-  .populate('thirdParties')
-  .populate({
-    path: 'thirdParties',
-    populate: {
-      path: 'artists'
-    }
-  })
   .then((user) => {
     if (!user) throw new Error(`Wrong credentials: ${JSON.stringify(creds)}`);
 
@@ -116,24 +220,40 @@ module.exports.authUser = (creds) => User.findOne({ username: creds.username })
             user.accessToken = token;
             user.save((err, result) => {
               if (err) reject(new Error(`err ${err.message}`));
-              resolve(result.public())
+              resolve(result.public());
             });
           });
         });
       });
   });
 
-module.exports.getById = (id) => User.findOne({ _id: id }).exec();
+module.exports.getById = (id, opts) => User.findOne({ _id: id }).exec()
+  .then(user => user.public());
 
-module.exports.update = (id, updateInfo) => User.findOneAndUpdate({ _id: id }, updateInfo, { new: true }).populate('thirdParties')
-  .populate({
-    path: 'thirdParties',
-    populate: {
-      path: 'artists'
-    }
-  }).exec()
-  .catch((err) => {
-    throw new Error(`Error updating user error: ${err.message}`);
-  });
+module.exports.getByIdRaw = (id) => User.findOne({ _id: id }).exec();
+
+module.exports.update = (id, updateInfo) => User.findOneAndUpdate({ _id: id }, updateInfo, { new: true }).exec();
 
 module.exports.getAll = () => User.find();
+
+module.exports.withProfile = (id, filter) => {
+  let query, regx, prevIndex, arr;
+    query = User.findOne({ _id: id });
+    regx = RegExp(':', 'g');
+  let models = ['thirdParties', 'artists', 'genres', 'tracks'];
+  if (filter === 'all') {
+    for(let i = 0; i < models.length; i++) {
+      query.populate(models[i]);
+    }
+  } else {
+    while((arr = regx.exec(filter)) !== null) {
+      key = prevIndex ? 
+        filter.substring(prevIndex, arr.index) : filter.substring(0, arr.index);
+      prevIndex = arr.index+1;
+      query.populate(key);
+    }
+  }
+
+  return query.exec()
+    .then(user => user.makeProfile(filter));
+}

@@ -1,18 +1,37 @@
 const mongoose = require('mongoose');
-
-const conn = require('../utilities/connectDb');
-
 const Schema = mongoose.Schema;
 
 const ArtistSchema = new Schema({
+  userId: {
+    type: Schema.Types.ObjectId,
+    ref: 'User',
+    required: true,
+    index: true
+  },
   name: String,
-  images: Array,
-  genres: Array,
+  images: [Schema.Types.Mixed],
   popularity: Number,
-  externalId: String,
+  externalId: {
+    type: String,
+    index: true,
+  },
   externalUri: String
-}, { timestamps: true });
+}, { 
+  timestamps: true,
+  toJSON: {
+    virtuals: true 
+  },
+  toObject: {
+    virtuals: true
+  }
+});
 
-const Artist = conn.model('Artist', ArtistSchema);
+ArtistSchema.virtual('genres', {
+  ref: 'Genre',
+  localField: '_id',
+  foreignField: 'artistId'
+});
+
+const Artist = mongoose.model('Artist', ArtistSchema);
 
 module.exports.create = (newArtist) => Artist.create(newArtist);

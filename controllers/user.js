@@ -1,4 +1,4 @@
-const userProcessor = require('../processors/users');
+const userProcessor = require('../processors/user');
 
 module.exports.authUser = (req, res) => {
   const { body } = req;
@@ -51,3 +51,14 @@ module.exports.tokenCheck = (req, res) => {
       })
   }
 };
+
+module.exports.getProfile = (req, res) => {
+  const { id } = req.params;
+  const { accessList } = req.query;
+
+  userProcessor.getProfile(id, accessList)
+    .then(resp => res.json(resp))
+    .catch(err => {
+      res.status(err.statusCode || 500).send({ error: err.message });
+    });
+}

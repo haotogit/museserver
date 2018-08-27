@@ -7,21 +7,13 @@ mongoose.Promise = bluebird;
 module.exports = (() => {
   const dbUri  = config.app.env === 'dev' ? 'mongodb://localhost/test-server' : (config.app.dbConnection || 'mongodb://localhost/express_prod');
   let db;
-
   const options = {
     useMongoClient: true,
     promiseLibrary: bluebird
   };
-
-  db = mongoose.createConnection(dbUri, options);
-
-  db.on('error', (err) => {
-    if (err) throw err;
-  });
-
-  db.once('open', () => {
-    console.log(`Mongo connected to ${db.name} at port ${db.port}`);
-  });
-
-  return db;
-})();
+  
+  return mongoose.connect(dbUri, options)
+    .then(db => {
+      console.log(`Mongo connected to ${db.name} at port ${db.port}`);
+    });
+});

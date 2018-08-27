@@ -3,49 +3,67 @@ const promise = require('bluebird');
 const urlLib = require('url');
 const config = require('../config/config');
 
-module.exports = (spotifyObj, spotifyOpts) => {
-  let refresherOpts, nextItem, authParam;
-  authParam = new Buffer(`${config.external.spotify.clientId}:${config.external.spotify.clientSecret}`).toString('base64');
-  refresherOpts = [
-    {
-      method: 'POST',
-      uri: 'https://accounts.spotify.com/api/token',
-      headers: {
-        Authorization: `Basic ${authParam}`
-      },
-      form: {
-        grant_type: 'refresh_token',
-        refresh_token: spotifyObj.refreshToken
-      }
-    },
-    spotifyOpts
-  ];
+const tpProcessor = require('../processors/third-party');
 
-  return rp(spotifyOpts)
+module.exports = (spotifyObj, spotifyOpts) => {
+  let refresherOpts, nextItem, authParam, dataObj,
+    updateObj, error;
+  authParam = new Buffer(`${config.external.spotify.clientId}:${config.external.spotify.clientSecret}`).toString('base64');
+  refresherOpts = {
+    method: 'POST',
+    uri: 'https://accounts.spotify.com/api/token',
+    headers: {
+      Authorization: `Basic ${authParam}`
+    },
+    form: {
+      grant_type: 'refresh_token',
+      refresh_token: spotifyObj.refreshToken
+    }
+  };
+
+  return promise.mapSeries(spotifyOpts, (val) => rp(val))
     .catch(err => {
-      let error = JSON.parse(err.error);
-      if (error.error.message === 'The access token expired') return refresherOpts;
+      error = err.error;
+      if (error.error.message === 'The access token expired') {
+        spotifyOpts.unshift(refresherOpts);
+        return null;
+      }
       throw new Error(error.error.message);
     })
     .then((res) => {
-      return promise.mapSeries(refresherOpts, (value, i) => {
+      if (res) return res;
+      return promise.mapSeries(spotifyOpts, (value, i) => {
         return rp(value)
           .then((data) => {
-            let parsedData = JSON.parse(data);
             if (i === 0) {
-              nextItem = refresherOpts[++i];
-              nextItem.headers.Authorization = `Bearer ${parsedData.access_token}`;
+              try {
+                dataObj = JSON.parse(data);
+              } catch(e) {
+                dataObj = data;
+              }
+
+              do {
+                spotifyOpts[++i].headers.Authorization = `Bearer ${dataObj.access_token}`;
+              } while(i < spotifyOpts.length - 1);
+              updateObj = {
+                accessToken: dataObj.access_token
+              };
+
+              // something is setting refreshtoken to null.. is it after a refresh it returns null for refreshToken ?
+              if (dataObj.refresh_token) updateObj.refreshToken = dataObj.refresh_token;
+              return tpProcessor.updateThirdParty(spotifyObj._id, updateObj)
+                .then((res) => {
+                  console.log('updated?==', res)
+                  return null;
+                });
             }
-            return parsedData;
+
+            return data;
           });
       })
-      .then((result) => {
-        // only return original request's response
-        return result[1];
-      })
+      .then(result => result.filter(item => item))
       .catch(err => {
         throw new Error(err.message);
       });
-    })
-    
+    });
 };

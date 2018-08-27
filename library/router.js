@@ -2,9 +2,9 @@ const express = require('express');
 const router = express.Router();
 const logger = require('./logger');
 const authHandler = require('./authHandler');
-const userController = require('../controllers/users');
-const serviceController = require('../controllers/services');
-const thirdPartyController = require('../controllers/thirdParty');
+const userController = require('../controllers/user');
+const serviceController = require('../controllers/service');
+const thirdPartyController = require('../controllers/third-party');
 
 module.exports = (() => {
   router.all('*', logger);
@@ -26,6 +26,7 @@ module.exports = (() => {
   router.all('*', authHandler);
 
   router.route('/users/:id')
+    .get(userController.getProfile)
     .put(userController.updateUser)
 
   router.route('/users/:id/thirdParty')
@@ -36,7 +37,7 @@ module.exports = (() => {
     .put(thirdPartyController.updateThirdParty)
 
   router.route('/users/:id/evalSpotify')
-    .post(thirdPartyController.evalSpotify)
+    .get(thirdPartyController.evalSpotify)
 
   return router;
 })();
