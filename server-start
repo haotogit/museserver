@@ -5,6 +5,5 @@ export SPOTIFY_AUTH_ENDPOINT=https://accounts.spotify.com/authorize
 export SPOTIFY_REDIRECT_URI=http://18.222.226.77:8087/api/v1/authSpotify/callback
 export TICKETMASTER_KEY=MwOoif9Ac5iZFedZG7xMW368oRbghDAz
 export TICKETMASTER_URL=https://app.ticketmaster.com/discovery/v2
-export MONGO_URI="mongodb://user:Star123@cluster0-shard-00-00-ffgz0.mongodb.net:27017,cluster0-shard-00-01-ffgz0.mongodb.net:27017,cluster0-shard-00-02-ffgz0.mongodb.net:27017/test?ssl=true&replicaSet=Cluster0-shard-0&authSource=admin&retryWrites=true"
 
 npm start

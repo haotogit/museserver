@@ -19,7 +19,7 @@ connectDb()
     app.use('/api/v1', router);
     app.listen(config.app.host.port, (err) => {
       if (err) logger.log(`error starting server: ${err}`)
-      winston.info(`Server started and listening at ${config.app.host.port}`);
+      winston.info(`Server started NODE_ENV:${config.app.env} and listening at ${config.app.host.port}`);
     }); 
   })
   .catch(err => winston.error(`Error initializing db ${err.message || err}`));
