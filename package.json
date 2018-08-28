@@ -26,7 +26,7 @@
     "nyc": "^12.0.2"
   },
   "scripts": {
-	  "start:dev": "pm2 start ecosystem.config.js",
+	  "start:dev": "node index.js",
     "start": "pm2 restart ecosystem.config.js --env production",
     "test": "nyc mocha test"
   },
