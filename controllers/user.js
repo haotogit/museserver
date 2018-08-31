@@ -1,14 +1,13 @@
 const userProcessor = require('../processors/user');
 const errorResponder = require('../utilities/errorResponseHelper');
+const responder = require('../utilities/responseHelper');
 
 module.exports.authUser = (req, res) => {
-  const { body } = req;
+  const { body, correlationId } = req;
 
   userProcessor.authUser(body)
-    .then((resp) => {
-      res.json(resp);
-    })
-    .catch((err) => errorResponder(err, res));
+    .then((resp) => responder(res, resp, correlationId))
+    .catch((err) => errorResponder(err, res, correlationId));
 };
 
 module.exports.createUser = (req, res) => {

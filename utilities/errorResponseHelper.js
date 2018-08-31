@@ -1,7 +1,7 @@
 const logger = require('./logger');
 
-module.exports = (err, res) => {
-  let error = { error: { message: err.message } };
-  logger.error(error);
+module.exports = (err, res, correlationId) => {
+  let error = { error: { message: err.message }, correlationId };
+  logger.error(err);
   res.status(err.statusCode || 500).json(error);
 }
