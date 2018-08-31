@@ -156,15 +156,6 @@ UserSchema.pre('save', function(next) {
   });
 });
 
-// need to change this... was lazy
-//UserSchema.pre('findOne', function(next) {
-//  //this.populate('thirdParties');
-//  //this.populate('artists');
-//  //this.populate('genres');
-//  //this.populate('tracks');
-//  next();
-//});
-
 const User = mongoose.model('User', UserSchema);
 
 //fix this. doesn't need a token after user create
