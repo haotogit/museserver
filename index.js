@@ -1,13 +1,13 @@
 'use strict';
 
 const express = require('express');
-const winston = require('winston');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 
 const config = require('./config/config');
 const router = require('./lib/router');
 const connectDb = require('./utilities/connectDb');
+const logger = require('./utilities/logger');
 
 const app = express();
 
@@ -18,8 +18,8 @@ connectDb()
   .then(() => {
     app.use('/api/v1', router);
     app.listen(config.app.host.port, (err) => {
-      if (err) logger.log(`error starting server: ${err}`)
-      winston.info(`Server started NODE_ENV:${config.app.env} and listening at ${config.app.host.port}`);
+      if (err) logger.error(`error starting server: ${err}`)
+      logger.info(`Server started NODE_ENV:${config.app.env} and listening at ${config.app.host.port}`);
     }); 
   })
-  .catch(err => winston.error(`Error initializing db ${err.message || err}`));
+  .catch(err => logger.error(`Error initializing db ${err.message || err}`));

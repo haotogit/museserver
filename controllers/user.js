@@ -1,4 +1,5 @@
 const userProcessor = require('../processors/user');
+const errorResponder = require('../utilities/errorResponseHelper');
 
 module.exports.authUser = (req, res) => {
   const { body } = req;
@@ -7,9 +8,7 @@ module.exports.authUser = (req, res) => {
     .then((resp) => {
       res.json(resp);
     })
-    .catch((err) => {
-      res.status(err.statusCode || 500).json({ error: { message: err.message } });
-    });
+    .catch((err) => errorResponder(err, res));
 };
 
 module.exports.createUser = (req, res) => {
