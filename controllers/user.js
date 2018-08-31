@@ -5,14 +5,14 @@ module.exports.authUser = (req, res, next) => {
   const { body, correlationId } = req;
   userProcessor.authUser(body)
     .then((resp) => responder(res, resp, correlationId))
-    .catch((err) => next(err));
+    .catch(next);
 };
 
 module.exports.createUser = (req, res, next) => {
   const { body, correlationId } = req;
   userProcessor.createUser(body)
     .then((resp) => responder(res, resp, correlationId))
-    .catch((err) => next(err));
+    .catch(next);
 };
 
 module.exports.updateUser = (req, res, next) => {
@@ -20,7 +20,7 @@ module.exports.updateUser = (req, res, next) => {
   const { body, correlationId } = req;
   userProcessor.updateUser(id, body)
     .then((resp) => responder(res, resp, correlationId))
-    .catch((err) => next(err));
+    .catch(next);
 };
 
 module.exports.getProfile = (req, res, next) => {
@@ -29,5 +29,5 @@ module.exports.getProfile = (req, res, next) => {
   const { correlationId } = req;
   userProcessor.getProfile(id, accessList)
     .then((resp) => responder(res, resp, correlationId))
-    .catch((err) => next(err));
+    .catch(next);
 }

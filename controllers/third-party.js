@@ -12,7 +12,7 @@ module.exports.createThirdParty = (req, res, next) => {
   newThirdParty.userId = req.params.id;
   thirdPartyProcessor.createThirdParty(newThirdParty)
     .then((resp) => responder(res, resp, correlationId))
-    .catch((err) => next(err));
+    .catch(next);
 };
 
 module.exports.updateThirdParty = (req, res, next) => {
@@ -22,7 +22,7 @@ module.exports.updateThirdParty = (req, res, next) => {
 
   thirdPartyProcessor.updateThirdParty(thirdPartyId, updateInfo)
     .then((resp) => responder(res, resp, correlationId))
-    .catch((err) => next(err));
+    .catch(next);
 };
 
 module.exports.deleteThirdParty = (req, res, next) => {
@@ -31,7 +31,7 @@ module.exports.deleteThirdParty = (req, res, next) => {
 
   thirdPartyProcessor.deleteThirdParty(id, thirdPartyId)
     .then((resp) => responder(res, { thirdPartyId }, correlationId))
-    .catch((err) => next(err));
+    .catch(next);
 };
 
 module.exports.authSpotifyCb = (req, res, next) => {
@@ -41,7 +41,7 @@ module.exports.authSpotifyCb = (req, res, next) => {
 
   thirdPartyProcessor.authSpotifyCb(userId, code, state, authParam)
     .then(result => res.redirect(urlLib.format(config.app.client)))
-    .catch(err => next(err));
+    .catch(next);
 };
 
 module.exports.evalSpotify = (req, res, next) => {
@@ -50,5 +50,5 @@ module.exports.evalSpotify = (req, res, next) => {
 
   thirdPartyProcessor.evalSpotify(id)
     .then((resp) => responder(res, resp, correlationId))
-    .catch((err) => next(err));
+    .catch(next);
 };
