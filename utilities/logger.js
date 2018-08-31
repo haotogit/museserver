@@ -27,10 +27,6 @@ const logger = createLogger({
   transports: [
     new transports.Console(options.console),
     new transports.File(Object.assign({}, options.file, {
-      filename: path.join(__dirname, '..', 'error.log'),
-      level: 'error',
-    })),
-    new transports.File(Object.assign({}, options.file, {
       filename: path.join(__dirname, '..', 'server.log'),
       level: 'info',
     })),
