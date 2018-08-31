@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const bluebird = require('bluebird');
 const jwt = require('jsonwebtoken');
+const makeToken = require('../utilities/makeToken');
 
 const config = require('../config/config');
 
@@ -169,15 +170,7 @@ UserSchema.pre('save', function(next) {
 
 const User = mongoose.model('User', UserSchema);
 
-function makeTokenObj(newUser) {
-  let obj = {},
-    fields = ['username', 'roles', '_id'];
-
-  fields.forEach(field => obj[field] = newUser[field]);
-
-  return obj;
-}
-
+//fix this. doesn't need a token after user create
 module.exports.createUser = (newUser) => {
   let newObj;
   if (!newUser.roles) {
@@ -186,7 +179,7 @@ module.exports.createUser = (newUser) => {
   }
 
   return new Promise((resolve, reject) => {
-    jwt.sign(makeTokenObj(newUser), config.app.tokenSecret, { expiresIn: '1h' }, (err, token) => {
+    jwt.sign(makeToken(newUser), config.app.tokenSecret, { expiresIn: '1h' }, (err, token) => {
       if (err) reject(new Error(err.message));
 
       newUser.accessToken = token;
@@ -214,14 +207,10 @@ module.exports.authUser = (creds) => User.findOne({ username: creds.username })
         if (!resp) throw new Error(`Wrong credentials: ${JSON.stringify(creds)}`);
 
         return new Promise((resolve, reject) => {
-          jwt.sign(makeTokenObj(user), config.app.tokenSecret, { expiresIn: '1h' }, (err, token) => {
+          jwt.sign(makeToken(user), config.app.tokenSecret, { expiresIn: '1h' }, (err, token) => {
             if (err) throw new Error(err.message);
-
             user.accessToken = token;
-            user.save((err, result) => {
-              if (err) reject(new Error(`err ${err.message}`));
-              resolve(result.public());
-            });
+            resolve(user.public());
           });
         });
       });
