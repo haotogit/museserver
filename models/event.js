@@ -15,3 +15,5 @@ const EventSchema = new Schema({
 const Event = mongoose.model('Event', EventSchema);
 
 module.exports.create = (options) => Event.create(options);
+
+module.exports.getUserEvents = (userId) => Event.find({ userId }).exec();

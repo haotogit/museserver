@@ -59,12 +59,6 @@ UserSchema.virtual('thirdParties', {
   foreignField: 'userId'
 });
 
-UserSchema.virtual('events', {
-  ref: 'events',
-  localField: '_id',
-  foreignField: 'userId'
-});
-
 function mapListItem(type, list) {
   let i = 0, j, newObj, aggregated = {},
     total = list.length;
@@ -220,4 +214,4 @@ module.exports.withProfile = (id, filter) => {
 
   return query.exec()
     .then(user => user.makeProfile(filter));
-}
+};

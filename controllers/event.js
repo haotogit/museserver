@@ -8,3 +8,11 @@ module.exports.createEvent = (req, res, next) => {
     .then((resp) => responder(res, resp, correlationId))
     .catch(next);
 };
+
+module.exports.getUserEvents = (req, res, next) => {
+  const { id } = req.params;
+  const { correlationId } = req;
+  evProcessor.getUserEvents(id)
+    .then((resp) => responder(res, resp, correlationId))
+    .catch(next);
+};
