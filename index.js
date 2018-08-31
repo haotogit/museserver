@@ -20,7 +20,7 @@ connectDb()
     app.use('/api/v1', router);
     app.use(errorHandler);
     app.listen(config.app.host.port, (err) => {
-      if (err) logger.error(`error starting server: ${err}`)
+      if (err) logger.error(`error starting server: ${err}`);
       logger.info(`Server started NODE_ENV:${config.app.env} and listening at ${config.app.host.port}`);
     }); 
   })
