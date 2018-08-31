@@ -6,7 +6,7 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 
 const config = require('./config/config');
-const router = require('./library/router');
+const router = require('./lib/router');
 const connectDb = require('./utilities/connectDb');
 
 const app = express();
