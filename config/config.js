@@ -14,7 +14,8 @@ module.exports = (() => {
         protocol: process.env.SERVER_PROTOCOL || 'http',
         hostname: process.env.SERVER_HOSTNAME || 'localhost',
         port: process.env.SERVER_PORT || 8080
-      }
+      },
+      security: process.env.SERVER_SECURITY || false
     },
     external: {
       spotify: {

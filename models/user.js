@@ -25,8 +25,6 @@ const UserSchema = new Schema({
     currSrc: String,
     by: String
   },
-  // need to separate as it's own model
-  events: Array
 }, { 
   timestamps: true,
   toJSON: {
@@ -57,6 +55,12 @@ UserSchema.virtual('genres', {
 
 UserSchema.virtual('thirdParties', {
   ref: 'ThirdParty',
+  localField: '_id',
+  foreignField: 'userId'
+});
+
+UserSchema.virtual('events', {
+  ref: 'events',
   localField: '_id',
   foreignField: 'userId'
 });
