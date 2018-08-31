@@ -5,7 +5,7 @@ const ThirdParty = require('../models/third-party'),
   Genre = require('../models/genre'),
   Track = require('../models/track'),
   config = require('../config/config'),
-  spotifyResolver = require('../lib/spotifyResolver'),
+  spotifyResolver = require('../lib/spotify-resolver'),
   helpers = require('../lib/tools');
 
 const rp = require('request-promise');

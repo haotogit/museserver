@@ -7,7 +7,7 @@ const cors = require('cors');
 const config = require('./config/config');
 const router = require('./lib/router');
 const errorHandler = require('./lib/error-handler');
-const connectDb = require('./utilities/connectDb');
+const connectDb = require('./utilities/connect-db');
 const logger = require('./utilities/logger');
 
 const app = express();

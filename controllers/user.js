@@ -1,5 +1,5 @@
 const userProcessor = require('../processors/user');
-const responder = require('../utilities/responseHelper');
+const responder = require('../utilities/response-helper');
 
 module.exports.authUser = (req, res, next) => {
   const { body, correlationId } = req;

@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const bluebird = require('bluebird');
 const jwt = require('jsonwebtoken');
-const makeToken = require('../utilities/makeToken');
+const makeToken = require('../utilities/make-token');
 
 const config = require('../config/config');
 
