@@ -17,9 +17,6 @@ const UserSchema = new Schema({
     type: String, 
     required: true,
   },
-  accessToken: {
-    type: String,
-  },
   roles: [String],
   name: String,
   lat: Number,
@@ -172,30 +169,13 @@ const User = mongoose.model('User', UserSchema);
 
 //fix this. doesn't need a token after user create
 module.exports.createUser = (newUser) => {
-  let newObj;
-  if (!newUser.roles) {
-    newUser.roles = [];
-    newUser.roles.push('user');
+  newUser.searchOpts = {
+    currSrc: 'spotify',
+    by: 'artists'
   }
 
-  return new Promise((resolve, reject) => {
-    jwt.sign(makeToken(newUser), config.app.tokenSecret, { expiresIn: '1h' }, (err, token) => {
-      if (err) reject(new Error(err.message));
-
-      newUser.accessToken = token;
-
-      newObj = new User(newUser);
-      newObj.searchOpts = {
-        currSrc: 'spotify',
-        by: 'artists'
-      }
-
-      newObj.save((err, result) => {
-        if (err) reject(new Error(`err ${err.message}`));
-        resolve(result.public());
-      });
-    });
-  });
+  return User.create(newUser)
+    .then(usr => usr.public());
 };
 
 module.exports.authUser = (creds) => User.findOne({ username: creds.username })
