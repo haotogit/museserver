@@ -155,6 +155,7 @@ UserSchema.pre('save', function(next) {
 });
 
 const User = mongoose.model('User', UserSchema);
+// this is because mongoose queries return query object and are not promises
 const promiser = require('../utilities/query-promiser')(User);
 
 module.exports.createUser = (newUser) => {
