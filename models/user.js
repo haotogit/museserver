@@ -155,19 +155,18 @@ UserSchema.pre('save', function(next) {
 });
 
 const User = mongoose.model('User', UserSchema);
+const promiser = require('../utilities/query-promiser')(User);
 
-//fix this. doesn't need a token after user create
 module.exports.createUser = (newUser) => {
   newUser.searchOpts = {
     currSrc: 'spotify',
     by: 'artists'
-  }
+  };
 
-  return User.create(newUser)
-    .then(usr => usr.public());
+  return promiser('create', newUser);
 };
 
-module.exports.authUser = (creds) => User.findOne({ username: creds.username })
+module.exports.authUser = (creds) => promiser('findOne', { username: creds.username })
   .then((user) => {
     if (!user) throw new Error(`Wrong credentials: ${JSON.stringify(creds)}`);
 
@@ -185,18 +184,16 @@ module.exports.authUser = (creds) => User.findOne({ username: creds.username })
       });
   });
 
-module.exports.getById = (id, opts) => User.findOne({ _id: id })
+module.exports.getById = (id, opts) => promiser('findById', id)
   .then(user => user.public());
 
-module.exports.getByIdRaw = (id) => User.findOne({ _id: id });
+module.exports.getByIdRaw = (id) => promiser('findById', id);
 
-module.exports.update = (id, updateInfo) => User.findOneAndUpdate({ _id: id }, updateInfo, { new: true });
+module.exports.update = (_id, updateInfo) => promiser('findOneAndUpdate', { _id }, updateInfo, { new: true });
 
-module.exports.getAll = () => User.find();
-
-module.exports.withProfile = (id, filter) => {
+module.exports.withProfile = (_id, filter) => {
   let query, regx, prevIndex, arr;
-    query = User.findOne({ _id: id });
+    query = User.findById(_id);
     regx = RegExp(':', 'g');
   let models = ['thirdParties', 'artists', 'genres', 'tracks'];
   if (filter === 'all') {
@@ -212,6 +209,9 @@ module.exports.withProfile = (id, filter) => {
     }
   }
 
-  return query
-    .then(user => user.makeProfile(filter));
+  return new Promise((resolve, reject) => {
+    query
+      .then(user => resolve(user.makeProfile(filter)))
+      .catch(reject);
+  });
 };
