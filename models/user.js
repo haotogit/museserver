@@ -168,7 +168,7 @@ module.exports.createUser = (newUser) => {
 
 module.exports.authUser = (creds) => promiser('findOne', { username: creds.username })
   .then((user) => {
-    if (!user) throw new Error(`Wrong credentials: ${JSON.stringify(creds)}`);
+    if (!user) throw new Error(`No user found with: ${JSON.stringify(creds)}`);
 
     return user.comparePassword(creds.password)
       .then((resp) => {
