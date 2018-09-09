@@ -185,12 +185,12 @@ module.exports.authUser = (creds) => User.findOne({ username: creds.username })
       });
   });
 
-module.exports.getById = (id, opts) => User.findOne({ _id: id }).exec()
+module.exports.getById = (id, opts) => User.findOne({ _id: id })
   .then(user => user.public());
 
-module.exports.getByIdRaw = (id) => User.findOne({ _id: id }).exec();
+module.exports.getByIdRaw = (id) => User.findOne({ _id: id });
 
-module.exports.update = (id, updateInfo) => User.findOneAndUpdate({ _id: id }, updateInfo, { new: true }).exec();
+module.exports.update = (id, updateInfo) => User.findOneAndUpdate({ _id: id }, updateInfo, { new: true });
 
 module.exports.getAll = () => User.find();
 
@@ -212,6 +212,6 @@ module.exports.withProfile = (id, filter) => {
     }
   }
 
-  return query.exec()
+  return query
     .then(user => user.makeProfile(filter));
 };

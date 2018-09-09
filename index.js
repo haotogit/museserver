@@ -13,8 +13,8 @@ const logger = require('./utilities/logger');
 const app = express();
 
 app.use(cors());
-app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
 connectDb()
   .then(() => {
     app.use('/api/v1', router);
