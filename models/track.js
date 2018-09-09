@@ -17,5 +17,6 @@ const TrackSchema = new Schema({
 }, { timestamps: true });
 
 const Track = mongoose.model('Track', TrackSchema);
+const promiser = require('../utilities/query-promiser')(Track);
 
-module.exports.create = (options) => Track.create(options);
+module.exports.create = (options) => promiser('create', options);

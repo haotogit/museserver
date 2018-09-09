@@ -24,5 +24,6 @@ const GenreSchema = new Schema({
 }, { timestamps: true });
 
 const Genre = mongoose.model('Genre', GenreSchema);
+const promiser = require('../utilities/query-promiser')(Genre);
 
-module.exports.create = (options) => Genre.create(options);
+module.exports.create = (options) => promiser('create', options);

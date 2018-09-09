@@ -16,10 +16,11 @@ const ThirdPartySchema = new Schema({
 }, { timestamps: true });
 
 const ThirdParty = mongoose.model('ThirdParty', ThirdPartySchema);
+const promiser = require('../utilities/query-promiser')(ThirdParty);
 
-module.exports.create = (options) => ThirdParty.create(options);
+module.exports.create = (options) => promiser('create', options);
 
-module.exports.getByUserId = (id) => ThirdParty.find({ userId: id }).exec('find');
+module.exports.getByUserId = (id) => promiser('find', { userId: id });
 
 module.exports.update = (id, updateInfo) => ThirdParty.findOneAndUpdate({ _id: id }, updateInfo, { new: true })
   .populate('artists')
@@ -27,4 +28,4 @@ module.exports.update = (id, updateInfo) => ThirdParty.findOneAndUpdate({ _id: i
     throw new Error(`error updating thirdparty id: ${id}`);
   });
 
-module.exports.delete = (id) => ThirdParty.findOneAndRemove({ _id: id }).exec();
+module.exports.delete = (_id) => promiser('findOneAndRemove', { _id });

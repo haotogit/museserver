@@ -33,5 +33,6 @@ ArtistSchema.virtual('genres', {
 });
 
 const Artist = mongoose.model('Artist', ArtistSchema);
+const promiser = require('../utilities/query-promiser')(Artist);
 
-module.exports.create = (newArtist) => Artist.create(newArtist);
+module.exports.create = (newArtist) => promiser('create', newArtist);
