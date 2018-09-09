@@ -22,10 +22,11 @@ module.exports.create = (options) => promiser('create', options);
 
 module.exports.getByUserId = (id) => promiser('find', { userId: id });
 
-module.exports.update = (id, updateInfo) => ThirdParty.findOneAndUpdate({ _id: id }, updateInfo, { new: true })
-  .populate('artists')
-  .catch(err => {
-    throw new Error(`error updating thirdparty id: ${id}`);
-  });
+module.exports.update = (id, updateInfo) => new Promise((resolve, reject) => {
+  ThirdParty.findOneAndUpdate({ _id: id }, updateInfo, { new: true })
+    .populate('artists')
+    .then(res => resolve(res))
+    .catch(reject);
+});
 
 module.exports.delete = (_id) => promiser('findOneAndRemove', { _id });

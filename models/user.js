@@ -190,7 +190,12 @@ module.exports.getById = (id, opts) => promiser('findById', id)
 
 module.exports.getByIdRaw = (id) => promiser('findById', id);
 
-module.exports.update = (_id, updateInfo) => promiser('findOneAndUpdate', { _id }, updateInfo, { new: true });
+module.exports.update = (_id, updateInfo) => new Promise((resolve, reject) => {
+  User.findOneAndUpdate({ _id }, updateInfo, { new: true })
+    .then(result => result.public())
+    .catch(reject);
+});
+
 
 module.exports.withProfile = (_id, filter) => {
   let query, regx, prevIndex, arr;
