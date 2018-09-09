@@ -12,10 +12,12 @@ const EventSchema = new Schema({
   },
   externalId: {
     type: String,
-    required: true,
     index: true
   }
-}, { timestamps: true });
+}, {
+  timestamps: true,
+  strict: false
+});
 
 const Event = mongoose.model('Event', EventSchema);
 
