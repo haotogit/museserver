@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const bluebird = require('bluebird');
 const config = require('../config/config');
+const logger = require('../utilities/logger');
 
 mongoose.Promise = bluebird;
 
@@ -14,6 +15,7 @@ module.exports = (() => {
   
   return mongoose.connect(dbUri, options)
     .then(db => {
-      console.log(`Mongo connected to ${db.name} at port ${db.port}`);
-    });
+      logger.info(`Mongo connected to ${db.name} at port ${db.port}`);
+    })
+    .catch(err => logger.error(`Error initializing db ${err.message || err}`));
 });

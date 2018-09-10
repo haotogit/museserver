@@ -31,6 +31,7 @@ module.exports.deleteThirdParty = (userId, thirdPartyId) => User.withProfile(use
 });
 
 module.exports.authSpotifyCb = (userId, code, state, authParam) => {
+  console.log('thefukkkk', config.external.spotify)
   let authOptions = {
     method: 'POST',
     uri: 'https://accounts.spotify.com/api/token',
@@ -50,6 +51,7 @@ module.exports.authSpotifyCb = (userId, code, state, authParam) => {
         response = JSON.parse(response);
       } catch(e) {
         console.log('errored while parsing response', e);
+        response = response;
       }
 
       let thirdPartyOpts = {
