@@ -49,7 +49,7 @@ module.exports.authSpotifyCb = (userId, code, state, authParam) => {
       try {
         response = JSON.parse(response);
       } catch(e) {
-        console.log('errored while formatting rp req', e);
+        console.log('errored while parsing response', e);
       }
 
       let thirdPartyOpts = {
