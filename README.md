@@ -1,4 +1,8 @@
-API for Muse
+Dependencies:
+Node, Mongodb
 
-- config logger
-- add linter
+npm install
+
+Start server:
+
+node index

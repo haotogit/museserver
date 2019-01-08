@@ -3,7 +3,6 @@ const bcrypt = require('bcrypt');
 const bluebird = require('bluebird');
 const jwt = require('jsonwebtoken');
 const makeToken = require('../utilities/make-token');
-
 const config = require('../config/config');
 
 const Schema = mongoose.Schema;
