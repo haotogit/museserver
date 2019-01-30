@@ -216,7 +216,7 @@ module.exports.withProfile = (_id, filter) => {
 
   return new Promise((resolve, reject) => {
     query
-      .then(user => resolve(user.makeProfile(filter)))
+      .then(user => resolve(user.makeProfile(filter).public()))
       .catch(reject);
   });
 };

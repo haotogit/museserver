@@ -11,7 +11,7 @@ const ThirdParty = require('../models/third-party'),
 const rp = require('request-promise');
 
 module.exports.createThirdParty = (options) => ThirdParty.create(options)
-  .then((thirdParty) => User.withProfile(thirdParty.userId, 'thirdParties:').then(user => user.public()));
+  .then((thirdParty) => User.withProfile(thirdParty.userId, 'thirdParties:'));
 
 module.exports.updateThirdParty = (thirdPartyId, updateInfo) => ThirdParty.update(thirdPartyId, updateInfo);
 

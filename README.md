@@ -4,5 +4,6 @@ Node, Mongodb
 npm install
 
 Start server:
+1. mongod - mongo db
 
-node index
+2. node index
