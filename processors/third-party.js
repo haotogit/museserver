@@ -151,7 +151,6 @@ module.exports.evalSpotify = (id) => {
         });
     })
     .then(() => {
-      return User.withProfile(id, 'thirdParties:artists:genres:tracks:')
-        .then(user => user.makeProfile().public())
+      return User.withProfile(id, 'thirdParties:artists:genres:tracks:');
     });
 };
