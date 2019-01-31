@@ -168,6 +168,8 @@ module.exports.createUser = (newUser) => {
 
 module.exports.authUser = (creds) => promiser('findOne', { username: creds.username })
   .then((user) => {
+    let accessToken;
+
     if (!user) throw new Error(`No user found with: ${JSON.stringify(creds)}`);
 
     return user.comparePassword(creds.password)
@@ -177,9 +179,14 @@ module.exports.authUser = (creds) => promiser('findOne', { username: creds.usern
         return new Promise((resolve, reject) => {
           jwt.sign(makeToken(user), config.app.tokenSecret, { expiresIn: '1h' }, (err, token) => {
             if (err) throw new Error(err.message);
-            user.accessToken = token;
-            resolve(user.public());
+            accessToken = token;
+            resolve(user);
           });
+        })
+        .then((currUser) => exports.withProfile(currUser._id, 'all'))
+        .then((userWithProfile) => {
+          userWithProfile.accessToken = accessToken;
+          return userWithProfile;
         });
       });
   });
@@ -195,12 +202,12 @@ module.exports.update = (_id, updateInfo) => new Promise((resolve, reject) => {
     .catch(reject);
 });
 
-
 module.exports.withProfile = (_id, filter) => {
   let query, regx, prevIndex, arr;
     query = User.findById(_id);
     regx = RegExp(':', 'g');
   let models = ['thirdParties', 'artists', 'genres', 'tracks'];
+
   if (filter === 'all') {
     for(let i = 0; i < models.length; i++) {
       query.populate(models[i]);

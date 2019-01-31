@@ -5,8 +5,7 @@ const config = require('../config/config');
 
 module.exports.createUser = (newUser) => User.createUser(newUser);
 
-module.exports.authUser = (creds) => User.authUser(creds)
-  .then(user => User.withProfile(user._id, 'thirdParties:artists:genres:tracks:'));
+module.exports.authUser = (creds) => User.authUser(creds);
 
 module.exports.updateUser = (id, updateInfo) => User.update(id, updateInfo);
 
