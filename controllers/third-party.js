@@ -36,10 +36,9 @@ module.exports.deleteThirdParty = (req, res, next) => {
 
 module.exports.authSpotifyCb = (req, res, next) => {
   const { code, state } = req.query;
-  const authParam = new Buffer(`${config.external.spotify.clientId}:${config.external.spotify.clientSecret}`).toString('base64');
   const userId = state.split('=')[1];
 
-  thirdPartyProcessor.authSpotifyCb(userId, code, state, authParam)
+  thirdPartyProcessor.authSpotifyCb(userId, code, state)
     .then(result => res.redirect(urlLib.format(config.app.client)))
     .catch(next);
 };
