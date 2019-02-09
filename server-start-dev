@@ -6,4 +6,4 @@ export SPOTIFY_REDIRECT_URI=http://localhost:8087/api/v1/authSpotify/callback
 export TICKETMASTER_KEY=MwOoif9Ac5iZFedZG7xMW368oRbghDAz
 export TICKETMASTER_URL=https://app.ticketmaster.com/discovery/v2
 
-npm run start:dev
+npm run start

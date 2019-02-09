@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const logger = require('../utilities/logger');
 const Schema = mongoose.Schema;
 
 const ThirdPartySchema = new Schema({
@@ -22,10 +23,12 @@ module.exports.create = (options) => promiser('create', options);
 
 module.exports.getByUserId = (id) => promiser('find', { userId: id });
 
-module.exports.update = (id, updateInfo) => new Promise((resolve, reject) => {
+module.exports.update = (id, updateInfo, correlationId) => new Promise((resolve, reject) => {
   ThirdParty.findOneAndUpdate({ _id: id }, updateInfo, { new: true })
-    .populate('artists')
-    .then(res => resolve(res))
+    .then(res => {
+      logger.info(`Updated thirdPartyId ${id}, with: ${updateInfo}, correlationId ${correlationId}`);
+      resolve(res);
+    })
     .catch(reject);
 });
 

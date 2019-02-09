@@ -28,7 +28,6 @@
     "nyc": "^12.0.2"
   },
   "scripts": {
-    "start:dev": "node index.js",
     "start": "node index.js",
     "test": "nyc mocha test"
   },

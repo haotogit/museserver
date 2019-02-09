@@ -1,9 +1,9 @@
 Dependencies:
-Node, Mongodb
+NodeJS, Mongodb
 
 npm install
 
-Start server:
-1. mongod - mongo db
+Start dev server:
+1. mongod
 
-2. node index
+2. run server-start-dev

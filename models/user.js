@@ -34,6 +34,9 @@ const UserSchema = new Schema({
   }
 });
 
+// arrays that grow without bound are a MongoDB
+// anti-pattern per docs
+// https://mongoosejs.com/docs/populate.html#populate-virtuals
 UserSchema.virtual('artists', {
   ref: 'Artist',
   localField: '_id',

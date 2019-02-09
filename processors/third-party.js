@@ -13,7 +13,7 @@ const rp = require('request-promise');
 module.exports.createThirdParty = (options) => ThirdParty.create(options)
   .then((thirdParty) => User.withProfile(thirdParty.userId, 'thirdParties:'));
 
-module.exports.updateThirdParty = (thirdPartyId, updateInfo) => ThirdParty.update(thirdPartyId, updateInfo);
+module.exports.updateThirdParty = (thirdPartyId, updateInfo, correlationId) => ThirdParty.update(thirdPartyId, updateInfo, correlationId);
 
 module.exports.deleteThirdParty = (userId, thirdPartyId) => User.withProfile(userId, 'thirdParties:').then(user => {
   if (!user) throw new Error(`No user found with id ${userId}`);
@@ -65,8 +65,8 @@ module.exports.authSpotifyCb = (userId, code, state, authParam) => {
     });
 };
 
-module.exports.evalSpotify = (id) => {
-  let spotifyObj, spotifyOpts, reqOpts,
+module.exports.evalSpotify = function evalSpotify(id, spotifyAccessToken, spotifyRefreshToken, spotifyId, correlationId) {
+  let spotifyOpts, reqOpts,
     domainsIndex;
   let domains = {
     artists: {
@@ -116,41 +116,36 @@ module.exports.evalSpotify = (id) => {
   };
 
   domainsIndex = Object.keys(domains);
-  return User.withProfile(id, 'thirdParties:')
-    .then(user => {
-      let currUser = user;
-      spotifyObj = user.thirdParties[0];
-      reqOpts = [];
-      domainsIndex.forEach(each => {
-        reqOpts.push({
-          method: 'GET',
-          uri: domains[each].uri,
-          headers: {
-            Authorization: `Bearer ${spotifyObj.accessToken}`
-          },
-          json: true
+  reqOpts = [];
+  domainsIndex.forEach(each => {
+    reqOpts.push({
+      method: 'GET',
+      uri: domains[each].uri,
+      headers: {
+        Authorization: `Bearer ${spotifyAccessToken}`
+      },
+      json: true
+    });
+  });
+
+  return spotifyResolver(reqOpts, spotifyId, spotifyAccessToken, spotifyRefreshToken, correlationId)
+    .then(data => {
+      return promise.mapSeries(data, (dataObj, i) => {
+        let currFields = domains[domainsIndex[i]].fields;
+        return promise.mapSeries(dataObj.items, (item, j) => {
+          let newObj = {};
+          let x = 0;
+          while(x < currFields.length) {
+            newObj[currFields[x]] = item[currFields[x].replace(/external/, '').toLowerCase()];
+            x++;
+          }
+
+          newObj.userId = id;
+          return domains[domainsIndex[i]].creator(newObj);
         });
       });
-
-      return spotifyResolver(spotifyObj, reqOpts)
-        .then(data => {
-          return promise.mapSeries(data, (dataObj, i) => {
-            let currFields = domains[domainsIndex[i]].fields;
-            return promise.mapSeries(dataObj.items, (item, j) => {
-              let newObj = {};
-              let x = 0;
-              while(x < currFields.length) {
-                newObj[currFields[x]] = item[currFields[x].replace(/external/, '').toLowerCase()];
-                x++;
-              }
-
-              newObj.userId = user._id;
-              return domains[domainsIndex[i]].creator(newObj);
-            });
-          });
-        });
     })
-    .then(() => {
-      return User.withProfile(id, 'thirdParties:artists:genres:tracks:');
+    .then((result) => {
+      return User.withProfile(id, 'all');
     });
 };
