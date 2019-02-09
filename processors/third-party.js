@@ -1,4 +1,3 @@
-const promise = require('bluebird');
 const ThirdParty = require('../models/third-party'),
   User = require('../models/user'),
   Artist = require('../models/artist'),
@@ -8,12 +7,17 @@ const ThirdParty = require('../models/third-party'),
   spotifyResolver = require('../lib/spotify-resolver'),
   helpers = require('../lib/tools');
 
+const promise = require('bluebird'),
+  moment = require('moment');
+
 const rp = require('request-promise');
 
 module.exports.createThirdParty = (options) => ThirdParty.create(options)
   .then((thirdParty) => User.withProfile(thirdParty.userId, 'thirdParties:'));
 
-module.exports.updateThirdParty = (thirdPartyId, updateInfo, correlationId) => ThirdParty.update(thirdPartyId, updateInfo, correlationId);
+module.exports.updateThirdParty = function updateThirdParty(thirdPartyId, updateInfo, correlationId) {
+  return ThirdParty.update(thirdPartyId, updateInfo, correlationId);
+}
 
 module.exports.deleteThirdParty = (userId, thirdPartyId) => User.withProfile(userId, 'thirdParties:').then(user => {
   if (!user) throw new Error(`No user found with id ${userId}`);
@@ -65,7 +69,7 @@ module.exports.authSpotifyCb = (userId, code, state, authParam) => {
     });
 };
 
-module.exports.evalSpotify = function evalSpotify(id, spotifyAccessToken, spotifyRefreshToken, spotifyId, correlationId) {
+module.exports.evalSpotify = function evalSpotify(userId, spotifyAccessToken, spotifyRefreshToken, spotifyId, correlationId) {
   let spotifyOpts, reqOpts,
     domainsIndex;
   let domains = {
@@ -128,24 +132,34 @@ module.exports.evalSpotify = function evalSpotify(id, spotifyAccessToken, spotif
     });
   });
 
-  return spotifyResolver(reqOpts, spotifyId, spotifyAccessToken, spotifyRefreshToken, correlationId)
-    .then(data => {
-      return promise.mapSeries(data, (dataObj, i) => {
-        let currFields = domains[domainsIndex[i]].fields;
-        return promise.mapSeries(dataObj.items, (item, j) => {
-          let newObj = {};
-          let x = 0;
-          while(x < currFields.length) {
-            newObj[currFields[x]] = item[currFields[x].replace(/external/, '').toLowerCase()];
-            x++;
-          }
+  return ThirdParty.getByUserId(userId)
+    .then((thirdParty) => {
+      if (moment(thirdParty.lastEval).isBefore(moment().utc()), 'day') {
+        let newError = new Error(`No update, please retry after ${moment(thirdParty.lastEval).add(1, 'days').format()}`);
+        newError.statusCode = 429;
+        throw newError;
+      } else {
+        return spotifyResolver(reqOpts, spotifyId, spotifyAccessToken, spotifyRefreshToken, correlationId)
+          .then(data => {
+            return promise.mapSeries(data, (dataObj, i) => {
+              let currFields = domains[domainsIndex[i]].fields;
+              return promise.mapSeries(dataObj.items, (item, j) => {
+                let newObj = {};
+                let x = 0;
+                while(x < currFields.length) {
+                  newObj[currFields[x]] = item[currFields[x].replace(/external/, '').toLowerCase()];
+                  x++;
+                }
 
-          newObj.userId = id;
-          return domains[domainsIndex[i]].creator(newObj);
-        });
-      });
-    })
-    .then((result) => {
-      return User.withProfile(id, 'all');
+                newObj.userId = userId;
+                return domains[domainsIndex[i]].creator(newObj);
+              });
+            });
+          })
+          .then((result) => {
+            return exports.updateThirdParty(spotifyId, { lastEval: moment().utc().format() }, correlationId) 
+              .then(() => User.withProfile(userId, 'all'));
+          });    
+      }
     });
 };

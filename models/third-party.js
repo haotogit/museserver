@@ -14,6 +14,7 @@ const ThirdPartySchema = new Schema({
   refreshToken: String,
   expiresIn: Number,
   top10: Array,
+  lastEval: Date,
 }, { timestamps: true });
 
 const ThirdParty = mongoose.model('ThirdParty', ThirdPartySchema);
@@ -24,9 +25,10 @@ module.exports.create = (options) => promiser('create', options);
 module.exports.getByUserId = (id) => promiser('find', { userId: id });
 
 module.exports.update = (id, updateInfo, correlationId) => new Promise((resolve, reject) => {
+  // don't new there, remove
   ThirdParty.findOneAndUpdate({ _id: id }, updateInfo, { new: true })
     .then(res => {
-      logger.info(`Updated thirdPartyId ${id}, with: ${updateInfo}, correlationId ${correlationId}`);
+      logger.info(`Updated thirdPartyId ${id}, with: ${JSON.stringify(updateInfo)}, correlationId ${correlationId}`);
       resolve(res);
     })
     .catch(reject);
