@@ -4,6 +4,7 @@ const bluebird = require('bluebird');
 const jwt = require('jsonwebtoken');
 const makeToken = require('../utilities/make-token');
 const config = require('../config/config');
+const tools = require('../utilities/tools');
 
 const Schema = mongoose.Schema;
 
@@ -61,53 +62,47 @@ UserSchema.virtual('thirdParties', {
   foreignField: 'userId'
 });
 
-function mapListItem(type, list) {
-  let i = 0, j, newObj, aggregated = {},
-    total = list.length;
-  let dict = {
-    genres: {
-      fields: ['name', 'factor', 'createdAt', 'updatedAt'],
-      sorter: 'factor'
-    },
-    artists: {
-      fields: ['name', 'factor', 'createdAt', 'updatedAt'],
-      sorter: 'factor'
-    },
-    tracks: {
-      fields: ['name', 'factor', 'createdAt', 'updatedAt'],
-      sorter: 'factor'
-    }
-  };
+const auxModels = {
+  genres: {
+    fields: 'name createdAt updatedAt',
+    sorter: 'factor'
+  },
+  artists: {
+    fields: 'name createdAt updatedAt',
+    sorter: 'factor'
+  },
+  tracks: {
+    fields: 'name createdAt updatedAt',
+    sorter: 'factor'
+  },
+  thirdParties: {
+    fields: ''
+  }
+};
 
-  while(i < list.length) {
-    let key = list[i].name;
+function mapListItem(type, list) {
+  let key,
+    i = 0,
+    aggregated = {},
+    total = list.length;
+
+  while (i < list.length) {
+    key = tools.upperCaser(list[i].name);
     if (aggregated[key]) {
       aggregated[key].factor++;
     } else {
-      aggregated[key] = {};
+      aggregated[key] = {
+        name: key,
+      };
+
       aggregated[key].factor = 1;
     }
 
-    aggregated[key]['pct'] = parseFloat(aggregated[key].factor / total).toFixed(1) * 10;
     i++;
   }
 
-  return Object.keys(aggregated).map(key => {
-    j = 0;
-    newObj = {};
-    while(j < dict[type].fields.length) {
-      let currFields = dict[type].fields;
-      newObj[currFields[j]] = aggregated[key][currFields[j]];
-      j++;
-    }
-
-    newObj.name = key;
-    return newObj;
-  })
-  .sort((a, b) => {
-    if (a[dict[type].sorter] < b[dict[type].sorter]) return 1;
-    else if (a[dict[type].sorter] > b[dict[type].sorter]) return -1;
-    return 0;
+  return Object.keys(aggregated).map((key) => {
+    return aggregated[key];
   });
 }
 
@@ -122,8 +117,7 @@ UserSchema.methods.comparePassword = function(password, cb) {
 };
 
 UserSchema.methods.makeProfile = function() {
-  let regx, lastIndex, key, arr;
-  this.genres = this.genres && this.genres.length !== 0 ? mapListItem('genres', this.genres).splice(0, 50) : null;
+  this.genres = this.genres && this.genres.length !== 0 ? mapListItem('genres', this.genres) : null;
   this.artists = this.artists && this.artists.length !== 0 ? mapListItem('artists', this.artists) : null;
   this.tracks = this.tracks && this.tracks.length !== 0 ? mapListItem('tracks', this.tracks) : null;
   return this;
@@ -209,13 +203,16 @@ module.exports.withProfile = (_id, filter) => {
   let query, regx, prevIndex, arr;
     query = User.findById(_id);
     regx = RegExp(':', 'g');
-  let models = ['thirdParties', 'artists', 'genres', 'tracks'];
 
   if (filter === 'all') {
-    for(let i = 0; i < models.length; i++) {
-      query.populate(models[i]);
+    for (let key in auxModels) {
+      query.populate({
+        path: key,
+        select: auxModels[key].fields,
+      });
     }
   } else {
+    // TODO: review and fix
     while((arr = regx.exec(filter)) !== null) {
       key = prevIndex ? 
         filter.substring(prevIndex, arr.index) : filter.substring(0, arr.index);
@@ -226,7 +223,7 @@ module.exports.withProfile = (_id, filter) => {
 
   return new Promise((resolve, reject) => {
     query
-      .then(user => resolve(user.makeProfile(filter).public()))
+      .then(user => resolve(user.makeProfile().public()))
       .catch(reject);
   });
 };

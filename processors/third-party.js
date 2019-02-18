@@ -5,7 +5,7 @@ const ThirdParty = require('../models/third-party'),
   Track = require('../models/track'),
   config = require('../config/config'),
   spotifyResolver = require('../lib/spotify-resolver'),
-  helpers = require('../lib/tools');
+  tools = require('../utilities/tools');
 
 const promise = require('bluebird'),
   moment = require('moment');
@@ -86,9 +86,11 @@ module.exports.evalSpotify = function evalSpotify(userId, spotifyAccessToken, sp
       creator: (dataObj, userId) => {
         const genres = dataObj.genres;
         delete dataObj.genres;
+        // TODO: fix artists names to save as camel
+        // createOrUpdate to add factor as creates instead
         return Artist.create(dataObj)
           .then(res => promise.mapSeries(genres, (each, i) => {
-            let genreKey = /-|\s/.test(each) ? helpers.keyToUpperCase(each) : each,
+            let genreKey = /-|\s/.test(each) ? tools.upperCaser(each) : each,
               genre,
               genreIndex,
               artistIndex;
