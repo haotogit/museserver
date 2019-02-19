@@ -80,30 +80,28 @@ const auxModels = {
   }
 };
 
-function mapListItem(type, list) {
-  let key,
+function mapListItem(list) {
+  if (!list || list.length === 0) return null;
+
+  let key = '',
     i = 0,
-    aggregated = {},
-    total = list.length;
+    total = list.length,
+    tempList = [],
+    tempIndex = null;
 
   while (i < list.length) {
-    key = tools.upperCaser(list[i].name);
-    if (aggregated[key]) {
-      aggregated[key].factor++;
+    if ((tempIndex = tempList.findIndex((el) => el.name === list[i].name)) >= 0) {
+      console.log('yooo', tempIndex);
+      tempList[tempIndex].factor++;
     } else {
-      aggregated[key] = {
-        name: key,
-      };
-
-      aggregated[key].factor = 1;
+      tempList.push(list[i]);
+      tempList[tempList.length - 1].factor = 1;
     }
 
     i++;
   }
 
-  return Object.keys(aggregated).map((key) => {
-    return aggregated[key];
-  });
+  return tempList;
 }
 
 UserSchema.methods.public = function() {
@@ -116,11 +114,14 @@ UserSchema.methods.comparePassword = function(password, cb) {
   return bcrypt.compare(password, this.password);
 };
 
-UserSchema.methods.makeProfile = function() {
-  this.genres = this.genres && this.genres.length !== 0 ? mapListItem('genres', this.genres) : null;
-  this.artists = this.artists && this.artists.length !== 0 ? mapListItem('artists', this.artists) : null;
-  this.tracks = this.tracks && this.tracks.length !== 0 ? mapListItem('tracks', this.tracks) : null;
-  return this;
+function makeProfile(user) {
+  // TODO: does this block ?? because sync
+  return new Promise(resolve => {
+    user.genres = mapListItem(user.genres);
+    user.artists = mapListItem(user.artists);
+    user.tracks = mapListItem(user.tracks);
+    resolve(user);
+  });
 };
 
 // this didn't work... booohooo
@@ -204,26 +205,28 @@ module.exports.withProfile = (_id, filter) => {
     query = User.findById(_id);
     regx = RegExp(':', 'g');
 
-  if (filter === 'all') {
-    for (let key in auxModels) {
-      query.populate({
-        path: key,
-        select: auxModels[key].fields,
-      });
-    }
-  } else {
-    // TODO: review and fix
-    while((arr = regx.exec(filter)) !== null) {
-      key = prevIndex ? 
-        filter.substring(prevIndex, arr.index) : filter.substring(0, arr.index);
-      prevIndex = arr.index+1;
-      query.populate(key);
-    }
-  }
+  // TODO: does this block ?? because sync
 
   return new Promise((resolve, reject) => {
+    if (filter === 'all') {
+      for (let key in auxModels) {
+        query.populate({
+          path: key,
+          select: auxModels[key].fields,
+        });
+      }
+    } else {
+      // TODO: review and fix
+      while((arr = regx.exec(filter)) !== null) {
+        key = prevIndex ? 
+          filter.substring(prevIndex, arr.index) : filter.substring(0, arr.index);
+        prevIndex = arr.index+1;
+        query.populate(key);
+      }
+    }
+
     query
-      .then(user => resolve(user.makeProfile().public()))
+      .then(user => resolve(makeProfile(user.public())))
       .catch(reject);
   });
 };

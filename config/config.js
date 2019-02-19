@@ -4,7 +4,7 @@ module.exports = (() => {
       env: process.env.NODE_ENV || 'dev',
       logLevel: process.env.LOG_LEVEL || 'debug',
       tokenSecret: process.env.TOKEN_SECRET || 'asdf',
-      dbConnection: process.env.MONGO_URI,
+      dbConnectionUri: process.env.MONGO_URI || 'mongodb://localhost:27017/test-server',
       host: {
         protocol: process.env.SERVER_PROTOCOL || 'http',
         hostname: process.env.SERVER_HOSTNAME || 'localhost',

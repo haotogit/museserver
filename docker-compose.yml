@@ -1,0 +1,17 @@
+version: "2"
+services:
+  muse-mongo:
+    container_name: muse-mongo
+    image: mongo
+    volumes:
+      - ./data:/data/db
+    ports:
+      - "27017:27017"
+  muse-server:
+    container_name: muse-server
+    restart: always
+    build: .
+    ports:
+      - "80:8087"
+    links:
+      - muse-mongo

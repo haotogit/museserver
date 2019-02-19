@@ -1,21 +1,38 @@
+'use strict';
 const mongoose = require('mongoose');
 const bluebird = require('bluebird');
 const config = require('../config/config');
 const logger = require('../utilities/logger');
 
-mongoose.Promise = bluebird;
-
-module.exports = (() => {
-  const dbUri  = config.app.env === 'dev' ? 'mongodb://localhost/test-server' : config.app.dbConnection;
-  let db;
+module.exports = () => {
   const options = {
-    useMongoClient: true,
-    promiseLibrary: bluebird
+    promiseLibrary: bluebird,
+    useNewUrlParser: true,
+    useCreateIndex: true,
+    autoReconnect: true,
+    reconnectInterval: 500,
+    reconnectTries: Number.MAX_VALUE
   };
-  
-  return mongoose.connect(dbUri, options)
-    .then(db => {
-      logger.info(`Mongo connected to ${db.name} at port ${db.port}`);
-    })
-    .catch(err => logger.error(`Error initializing db ${err.message || err}`));
-});
+
+  mongoose.connection.on('disconnected', () => {
+    logger.info(`Mongoose disconnected`);
+    connectDb();
+  });
+
+  function connectDb() {
+    return new Promise(function(resolve, reject) {
+      let db;
+      mongoose.connect(config.app.dbConnectionUri, options)
+        .then(conn => {
+          db = conn.connections[0];
+          logger.info(`Mongodb connected to ${db.client.s.url}`);
+          resolve(db);
+        })
+        .catch(err => {
+          reject(err);
+        });
+    });
+  }
+
+  return connectDb();
+};
