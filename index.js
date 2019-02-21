@@ -15,22 +15,13 @@ app.use(cors({ origin: '*' }));
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 connectDb()
-  .then((currCon) => {
+  .then(() => {
     app.use(logMiddleware);
-    //app.use((req, res, next) => {
-    //  console.log('currConn===', currCon._readyState);
-
-    //  //if (conn._readyState)
-    //  next();
-    //});
     app.use(errorHandler);
     app.use('/api/v1', router);
     app.listen(config.app.host.port, (err) => {
       if (err) logger.error(`error starting server: ${err}`);
       logger.info(`Server started NODE_ENV:${config.app.env} and listening at ${config.app.host.port}`);
     });
-  })
-  .catch(err => {
-    logger.error(`Error initializing db ${err.message || err}`);
   });
   

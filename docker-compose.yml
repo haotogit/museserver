@@ -1,17 +1,21 @@
-version: "2"
+version: "3.7"
 services:
-  muse-mongo:
-    container_name: muse-mongo
-    image: mongo
-    volumes:
-      - ./data:/data/db
-    ports:
-      - "27017:27017"
-  muse-server:
-    container_name: muse-server
+  web:
     restart: always
     build: .
+    env_file: .env
     ports:
       - "80:8087"
-    links:
-      - muse-mongo
+    depends_on:
+      - mongo
+
+  mongo:
+    container_name: mongo
+    image: mongo
+    volumes:
+      - db-data:/data/db
+    ports:
+      - "27017:27017"
+
+volumes:
+  db-data:

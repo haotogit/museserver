@@ -200,6 +200,8 @@ module.exports.update = (_id, updateInfo) => new Promise((resolve, reject) => {
     .catch(reject);
 });
 
+//TODO: change this to populate auxModels individually
+// too many I/O operations for one task
 module.exports.withProfile = (_id, filter) => {
   let query, regx, prevIndex, arr;
     query = User.findById(_id);
