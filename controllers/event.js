@@ -1,5 +1,5 @@
 const evProcessor = require('../processors/event');
-const responder = require('../utilities/response-helper');
+const responder = require('../utils/response-helper');
 
 module.exports.createEvent = (req, res, next) => {
   const { body, correlationId } = req;

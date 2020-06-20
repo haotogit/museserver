@@ -1,9 +1,9 @@
-FROM node:latest
-RUN mkdir -p /usr/src/app
-WORKDIR /usr/src/app
+FROM nodebase:latest
+RUN mkdir -p /app
+WORKDIR /app
 COPY . .
 RUN npm install
-
 EXPOSE 8087
 
-CMD ["node", "index.js"]
+ENTRYPOINT ["npm"]
+CMD ["run", "start"]

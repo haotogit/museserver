@@ -1,5 +1,3 @@
-const mongoose = require('mongoose');
-
 module.exports.healthCheck = (req, res, next) => {
   const getMemoryUsage = () => {
     const used = process.memoryUsage();

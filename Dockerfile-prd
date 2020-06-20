@@ -1,0 +1,16 @@
+FROM nodebase:latest AS builder
+ARG node_env
+RUN mkdir -p /app
+WORKDIR /app
+COPY . .
+
+RUN npm install --only=prod
+
+FROM node:13.14.0-alpine
+RUN mkdir -p /app
+WORKDIR /app
+COPY --from=builder /app .
+EXPOSE 8087
+USER node
+ENTRYPOINT ["npm"]
+CMD ["run", "start"]

@@ -1,17 +1,11 @@
 const userProcessor = require('../processors/user');
-const responder = require('../utilities/response-helper');
+const responder = require('../utils/response-helper');
+const logger = require('../utils/logger');
 
 module.exports.authUser = (req, res, next) => {
   const { body, correlationId } = req;
-  userProcessor.authUser(body)
-    .then((resp) => {
-      responder(res, resp, correlationId);
-      const used = process.memoryUsage();
-      for (key in used) {
-        used[key] = Math.round(used[key] / 1024 / 1024 * 100) / 100;
-      }
-      console.log('memory used', used);
-    })
+	userProcessor.authUser(body)
+    .then((resp) => responder(res, resp, correlationId))
     .catch(next);
 };
 

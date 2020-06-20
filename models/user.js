@@ -2,9 +2,9 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const bluebird = require('bluebird');
 const jwt = require('jsonwebtoken');
-const makeToken = require('../utilities/make-token');
+const makeToken = require('../utils/make-token');
 const config = require('../config/config');
-const tools = require('../utilities/tools');
+const tools = require('../utils/tools');
 
 const Schema = mongoose.Schema;
 
@@ -91,7 +91,6 @@ function mapListItem(list) {
 
   while (i < list.length) {
     if ((tempIndex = tempList.findIndex((el) => el.name === list[i].name)) >= 0) {
-      console.log('yooo', tempIndex);
       tempList[tempIndex].factor++;
     } else {
       tempList.push(list[i]);
@@ -153,7 +152,7 @@ UserSchema.pre('save', function(next) {
 
 const User = mongoose.model('User', UserSchema);
 // this is because mongoose queries return query object and are not promises
-const promiser = require('../utilities/query-promiser')(User);
+const promiser = require('../utils/query-promiser')(User);
 
 module.exports.createUser = (newUser) => {
   newUser.searchOpts = {

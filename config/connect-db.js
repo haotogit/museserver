@@ -1,45 +1,28 @@
 'use strict';
-const mongoose = require('mongoose');
-const bluebird = require('bluebird');
+const { MongoClient } = require('mongodb');
 const config = require('../config/config');
-const logger = require('../utilities/logger');
+const logger = require('../utils/logger');
 
-module.exports = () => {
-  const options = {
-    promiseLibrary: bluebird,
-    useNewUrlParser: true,
-    useCreateIndex: true,
-    autoReconnect: true,
-    reconnectInterval: 500,
-    reconnectTries: Number.MAX_VALUE
-  };
+module.exports.connect = async function connect() {
+	let retryConnect, db;
   let retries = 1;
-
-  function connector() {
-    let retryConnect;
-    return mongoose.connect(config.app.dbConnectionUri, options)
-      .then(conn => {
-        let db = conn.connections[0];
-        logger.info(`Mongodb connected to ${db.client.s.url}`);
-        clearTimeout(retryConnect);
-
-        mongoose.connection.on('disconnected', () => {
-          logger.error(`Mongodb connection to ${config.app.dbConnectionUri} disconnected`);
-        });
-      })
-      .catch(err => {
-        logger.error(`Error initializing db ${err.message || err}`);
-
-        if (retries <= 10) {
-          logger.error(`Retrying mongodb connection to ${config.app.dbConnectionUri} #${retries} in 10s`);
-          retryConnect = setTimeout(connector, 5000);
-          retries++;
-        } else {
-          logger.error(`Maxed out connection retries at ${retries-1} times. Please review mongodb connection and restart`);
-          clearTimeout(retryConnect);
-        }
-      });
-  }
-
-  return connector();
+	try {
+		const client = new MongoClient(config.app.db.connectionUri, { useNewUrlParser: true });
+		await client.connect();
+		db = client.db(config.app.db.Name)
+		logger.info(`Mongodb connected to ${config.app.db.connectionUri}`);
+		clearTimeout(retryConnect);
+		return;
+	} catch(err) {
+		logger.error(`Error connecting to ${config.app.db.connectionUri} ${err.message || err}`);
+		if (retries <= 10) {
+			logger.error(`Retrying mongodb connection to ${config.app.db.connectionUri} #${retries} in 10s`);
+			retries++;
+			retryConnect = setTimeout(exports.connector, 5000);
+		} else {
+			logger.error(`Maxed out connection retries at ${retries-1} times. Please review mongodb connection and restart`);
+			clearTimeout(retryConnect);
+			process.exit(1)
+		}
+	}
 };

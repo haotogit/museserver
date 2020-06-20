@@ -20,7 +20,7 @@ const EventSchema = new Schema({
 });
 
 const Event = mongoose.model('Event', EventSchema);
-const promiser = require('../utilities/query-promiser')(Event);
+const promiser = require('../utils/query-promiser')(Event);
 
 module.exports.create = (options) => promiser('create', options);
 

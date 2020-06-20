@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const logger = require('../utilities/logger');
+const logger = require('../utils/logger');
 const Schema = mongoose.Schema;
 
 const ThirdPartySchema = new Schema({
@@ -18,7 +18,7 @@ const ThirdPartySchema = new Schema({
 }, { timestamps: true });
 
 const ThirdParty = mongoose.model('ThirdParty', ThirdPartySchema);
-const promiser = require('../utilities/query-promiser')(ThirdParty);
+const promiser = require('../utils/query-promiser')(ThirdParty);
 
 module.exports.create = (options) => promiser('create', options);
 

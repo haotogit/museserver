@@ -5,7 +5,7 @@ const ThirdParty = require('../models/third-party'),
   Track = require('../models/track'),
   config = require('../config/config'),
   spotifyResolver = require('../lib/spotify-resolver'),
-  tools = require('../utilities/tools');
+  tools = require('../utils/tools');
 
 const promise = require('bluebird'),
   moment = require('moment');

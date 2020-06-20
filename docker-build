@@ -1,0 +1,3 @@
+export NODE_ENV=prod
+
+docker build --build-arg node_env=$NODE_ENV -f ./Dockerfile-prd -t muse-server:latest .
