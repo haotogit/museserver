@@ -4,7 +4,7 @@ const qString = require('query-string');
 const user = require('../processors/user');
 const thirdPartyProcessor = require('../processors/third-party');
 const config = require('../config/config');
-const responder = require('../utils/response-helper');
+const { responder } = require('../utils');
 
 module.exports.createThirdParty = (req, res, next) => {
   const newThirdParty = req.body;

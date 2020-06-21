@@ -1,11 +1,15 @@
+const bluebird = require('bluebird');
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
-const bluebird = require('bluebird');
 const jwt = require('jsonwebtoken');
-const makeToken = require('../utils/make-token');
 const config = require('../config/config');
-const tools = require('../utils/tools');
+const { 
+	makeToken,
+	makeErr,
+	logger,
+} = require('../utils');
 
+let { promiser } = require('../utils');
 const Schema = mongoose.Schema;
 
 const UserSchema = new Schema({
@@ -152,7 +156,7 @@ UserSchema.pre('save', function(next) {
 
 const User = mongoose.model('User', UserSchema);
 // this is because mongoose queries return query object and are not promises
-const promiser = require('../utils/query-promiser')(User);
+promiser = promiser(User);
 
 module.exports.createUser = (newUser) => {
   newUser.searchOpts = {
@@ -160,22 +164,20 @@ module.exports.createUser = (newUser) => {
     by: 'artists'
   };
 
-  return promiser('create', newUser);
+	return promiser('create', newUser);
 };
 
 module.exports.authUser = (creds) => promiser('findOne', { username: creds.username })
   .then((user) => {
     let accessToken;
-
-    if (!user) throw new Error(`No user found with: ${JSON.stringify(creds)}`);
-
+    if (!user) throw makeErr(`Error authenticating with: ${JSON.stringify(creds)}`, 400);
     return user.comparePassword(creds.password)
       .then((resp) => {
-        if (!resp) throw new Error(`Wrong credentials: ${JSON.stringify(creds)}`);
+				if (!resp) throw makeErr(`Error authenticating with: ${JSON.stringify(creds)}`, 400);
 
         return new Promise((resolve, reject) => {
           jwt.sign(makeToken(user), config.app.tokenSecret, { expiresIn: '1h' }, (err, token) => {
-            if (err) throw new Error(err.message);
+            if (err) throw makeErr(`Error authenticating ${err.message}`);
             accessToken = token;
             resolve(user);
           });

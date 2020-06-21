@@ -6,19 +6,20 @@ const cors = require('cors');
 const config = require('./config/config');
 const router = require('./router');
 const errorHandler = require('./lib/error-handler');
-const connectDB = require('./config/connect-mongoose');
+const StoreMake = require('./store/store-config');
 const logMiddleware = require('./lib/logger');
-const logger = require('./utils/logger');
+const { logger } = require('./utils');
 const app = express();
 
 app.use(cors({ origin: '*' }));
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
-connectDB()
+const newStore = new StoreMake(config.app.db);
+newStore.init()
 	.then(() => {
 		app.use(logMiddleware);
-		app.use(errorHandler);
 		app.use('/api/v1', router);
+		app.use(errorHandler);
 		app.listen(config.app.host.port, (err) => {
 			if (err) logger.error(`error starting server: ${err}`);
 			logger.info(`Server started NODE_ENV:${config.app.env} and listening at ${config.app.host.port}`);
@@ -26,5 +27,5 @@ connectDB()
 	})
 	.catch(err => {
 		logger.error(`Error with server init ${err.stack || err.message}`);
-		process.exit(1);
+		process.exit(0);
 	});

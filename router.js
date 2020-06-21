@@ -5,7 +5,7 @@ const authHandler = require('./lib/auth-handler'),
   serviceController = require('./controllers/service'),
   thirdPartyController = require('./controllers/third-party'),
 	eventController = require('./controllers/event'),
-	logger = require('./utils/logger');
+	{ logger } = require('./utils');
 
 router.get('/authSpotify/callback', thirdPartyController.authSpotifyCb);
 

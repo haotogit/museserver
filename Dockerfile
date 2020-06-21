@@ -5,5 +5,5 @@ COPY . .
 RUN npm install
 EXPOSE 8087
 
-ENTRYPOINT ["npm"]
-CMD ["run", "start"]
+ENTRYPOINT ["node"]
+CMD ["index"]

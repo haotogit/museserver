@@ -4,6 +4,7 @@ networks:
 services:
   server:
     build: .
+    image: muserserver_server:dev
     env_file: .env
     ports:
       - "8087:8087"
@@ -12,8 +13,7 @@ services:
     depends_on:
       - mongo
   mongo:
-    container_name: mongo
-    image: mongo
+    image: mongo:4.2.8
     volumes:
       - db-data:/data/db
     ports:

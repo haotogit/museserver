@@ -6,8 +6,13 @@ module.exports = (() => {
       tokenSecret: process.env.TOKEN_SECRET || 'asdf',
       //dbConnectionUri: process.env.MONGO_URI || 'mongodb://mongo:27017/tester',
 			db: {
-				connectionUri: process.env.MONGO_URI || 'mongodb://localhost:27017/test-server',
-				name: process.env.MONGO_DBNAME || 'test-server',
+				store: process.env.WHICH_STORE || 'MongoDB',
+				connStr: process.env.STORE_CONN_STR || 'mongodb://localhost:27017/test-server',
+				options: {
+					dbName: process.env.DB_NAME || 'test-server',
+					maxRetries: 3,
+					retryInterval: 1,
+				},
 			},
       host: {
         protocol: process.env.SERVER_PROTOCOL || 'http',

@@ -5,7 +5,7 @@ const ThirdParty = require('../models/third-party'),
   Track = require('../models/track'),
   config = require('../config/config'),
   spotifyResolver = require('../lib/spotify-resolver'),
-  tools = require('../utils/tools');
+	{ upperCaser } = require('../utils');
 
 const promise = require('bluebird'),
   moment = require('moment');
@@ -90,7 +90,7 @@ module.exports.evalSpotify = function evalSpotify(userId, spotifyAccessToken, sp
         // createOrUpdate to add factor as creates instead
         return Artist.create(dataObj)
           .then(res => promise.mapSeries(genres, (each, i) => {
-            let genreKey = /-|\s/.test(each) ? tools.upperCaser(each) : each,
+            let genreKey = /-|\s/.test(each) ? upperCaser(each) : each,
               genre,
               genreIndex,
               artistIndex;
