@@ -24,7 +24,7 @@ module.exports = (() => {
         hostname: process.env.SERVER_HOSTNAME || 'localhost',
         port: process.env.SERVER_PORT || 8080
       },
-      security: process.env.SERVER_SECURITY || false
+      security: process.env.SERVER_SECURITY || true
     },
     external: {
       spotify: {
@@ -32,7 +32,8 @@ module.exports = (() => {
         clientSecret: process.env.SPOTIFY_CLIENT_SECRET,
         baseUrl: 'https://api.spotify.com/v1',
         redirectUri: process.env.SPOTIFY_REDIRECT_URI || '',
-        authUri: process.env.SPOTIFY_AUTH_URI
+				authUri: process.env.SPOTIFY_AUTH_URI,
+				codifier: process.env.SPOTIFY_CODIFIER || 'f93b87bf-5652-4ecf-90c3-314fd4733813',
       },
       ticketmaster: {
         baseUrl: process.env.TICKETMASTER_URL,

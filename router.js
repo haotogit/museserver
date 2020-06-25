@@ -1,6 +1,6 @@
 const express = require('express')
   router = express.Router();
-const authHandler = require('./lib/auth-handler'),
+const { authHandler } = require('./lib'),
   userController = require('./controllers/user'),
   serviceController = require('./controllers/service'),
   thirdPartyController = require('./controllers/third-party'),
@@ -8,6 +8,7 @@ const authHandler = require('./lib/auth-handler'),
 	{ logger } = require('./utils');
 
 router.get('/authSpotify/callback', thirdPartyController.authSpotifyCb);
+router.get('/linkSpotify', thirdPartyController.linkSpotify);
 
 router.post('/users/auth', userController.authUser);
 

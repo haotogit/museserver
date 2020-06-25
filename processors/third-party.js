@@ -4,8 +4,8 @@ const ThirdParty = require('../models/third-party'),
   Genre = require('../models/genre'),
   Track = require('../models/track'),
   config = require('../config/config'),
-  spotifyResolver = require('../lib/spotify-resolver'),
-	{ upperCaser } = require('../utils');
+	{ spotifyResolver } = require('../lib'),
+	{ upperCaser, logger } = require('../utils');
 
 const promise = require('bluebird'),
   moment = require('moment');
@@ -34,18 +34,20 @@ module.exports.deleteThirdParty = (userId, thirdPartyId) => User.withProfile(use
     });
 });
 
-module.exports.authSpotifyCb = (userId, code, state, authParam) => {
+module.exports.authSpotifyCb = (userId, code, verifier) => {
   let authOptions = {
     method: 'POST',
     uri: 'https://accounts.spotify.com/api/token',
     form: {
+			client_id: config.external.spotify.clientId,
+			grant_type: 'authorization_code',
       code,
       redirect_uri: config.external.spotify.redirectUri,
-      grant_type: 'authorization_code'
+			code_verifier: verifier,
     },
     headers: {
-      'Authorization': `Basic ${authParam}` 
-    }
+      'Authorization': `Basic ${Buffer.from(`${config.external.spotify.clientId}:${config.external.spotify.clientSecret}`).toString('base64')}`
+		},
   };
 
   return rp(authOptions)

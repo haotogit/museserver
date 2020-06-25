@@ -5,9 +5,8 @@ const cors = require('cors');
 
 const config = require('./config/config');
 const router = require('./router');
-const errorHandler = require('./lib/error-handler');
+const { errorHandler, loggerMiddleware } = require('./lib');
 const StoreMake = require('./store/store-config');
-const logMiddleware = require('./lib/logger');
 const { logger } = require('./utils');
 const app = express();
 
@@ -17,7 +16,7 @@ app.use(bodyParser.json());
 const newStore = new StoreMake(config.app.db);
 newStore.init()
 	.then(() => {
-		app.use(logMiddleware);
+		app.use(loggerMiddleware);
 		app.use('/api/v1', router);
 		app.use(errorHandler);
 		app.listen(config.app.host.port, (err) => {

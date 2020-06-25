@@ -1,10 +1,12 @@
 const urlLib = require('url');
 const qString = require('query-string');
+const rp = require('request-promise');
 
 const user = require('../processors/user');
 const thirdPartyProcessor = require('../processors/third-party');
 const config = require('../config/config');
-const { responder } = require('../utils');
+const { responder, logger } = require('../utils');
+const { hashMaker, cryptoStrMaker } = require('../lib');
 
 module.exports.createThirdParty = (req, res, next) => {
   const newThirdParty = req.body;
@@ -35,10 +37,10 @@ module.exports.deleteThirdParty = (req, res, next) => {
 };
 
 module.exports.authSpotifyCb = (req, res, next) => {
-  const { code, state } = req.query;
-  const userId = state.split('=')[1];
+  let { code, state } = req.query;
+	state = state.split(':');
 
-  thirdPartyProcessor.authSpotifyCb(userId, code, state)
+  thirdPartyProcessor.authSpotifyCb(state[0], code, state[1])
     .then(result => res.redirect(urlLib.format(config.app.client)))
     .catch(next);
 };
@@ -51,4 +53,22 @@ module.exports.evalSpotify = (req, res, next) => {
   thirdPartyProcessor.evalSpotify(id, spotifyAccessToken, spotifyRefreshToken, spotifyId, correlationId)
     .then((resp) => responder(res, resp, correlationId))
     .catch(next);
+};
+
+module.exports.linkSpotify = (req, res, next) => {
+  const scope = 'user-read-private user-top-read user-library-read user-read-email user-read-birthdate';
+	const verifier = cryptoStrMaker();
+	const codified = hashMaker(verifier);
+  const url = `https://accounts.spotify.com/authorize?${qString.stringify({
+    client_id: config.external.spotify.clientId,
+    response_type: 'code',
+    redirect_uri: config.external.spotify.redirectUri,
+		code_challenge_method: 'S256',
+		code_challenge: codified,
+		// TODO hash this
+    state: `${req.query.ctx}:${verifier}`,
+    scope: scope,
+  })}`;
+
+	res.redirect(url);
 };
