@@ -8,7 +8,6 @@ const {
 	makeErr,
 	logger,
 } = require('../utils');
-
 let { promiser } = require('../utils');
 const Schema = mongoose.Schema;
 
@@ -164,20 +163,21 @@ module.exports.createUser = (newUser) => {
     by: 'artists'
   };
 
-	return promiser('create', newUser);
+	return promiser('create', newUser)
+		.then(user => user.public());
 };
 
 module.exports.authUser = (creds) => promiser('findOne', { username: creds.username })
   .then((user) => {
     let accessToken;
-    if (!user) throw makeErr(`Error authenticating with: ${JSON.stringify(creds)}`, 400);
+    if (!user) throw makeErr(`Invalid user: ${JSON.stringify(creds)}`, 404);
     return user.comparePassword(creds.password)
       .then((resp) => {
-				if (!resp) throw makeErr(`Error authenticating with: ${JSON.stringify(creds)}`, 400);
+				if (!resp) throw makeErr(`Error authenticating with: ${JSON.stringify(creds)}`, 401);
 
         return new Promise((resolve, reject) => {
           jwt.sign(makeToken(user), config.app.tokenSecret, { expiresIn: '1h' }, (err, token) => {
-            if (err) throw makeErr(`Error authenticating ${err.message}`);
+            if (err) throw makeErr(`Error authenticating with ${JSON.stringify(creds)}`);
             accessToken = token;
             resolve(user);
           });
@@ -233,3 +233,5 @@ module.exports.withProfile = (_id, filter) => {
       .catch(reject);
   });
 };
+
+module.exports.getByUsername = (username) => promiser('findOne', { username });

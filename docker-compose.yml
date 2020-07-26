@@ -2,16 +2,16 @@ version: "3.7"
 networks:
   samuca-net:
 services:
-  server:
-    build: .
-    image: muserserver_server:dev
-    env_file: .env
-    ports:
-      - "8087:8087"
-    networks:
-      - samuca-net
-    depends_on:
-      - mongo
+  #server:
+  #  build: .
+  #  image: muserserver_server:dev
+  #  env_file: .env
+  #  ports:
+  #    - "8087:8087"
+  #  networks:
+  #    - samuca-net
+  #  depends_on:
+  #    - mongo
   mongo:
     image: mongo:4.2.8
     volumes:

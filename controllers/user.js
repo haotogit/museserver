@@ -30,4 +30,11 @@ module.exports.getProfile = (req, res, next) => {
   userProcessor.getProfile(id, accessList)
     .then((resp) => responder(res, resp, correlationId))
     .catch(next);
-}
+};
+
+module.exports.checkUsername = (req, res, next) => {
+	const { body, correlationId } = req;
+	userProcessor.checkUsername(body.username)
+		.then((resp) => responder(res, resp, correlationId))
+		.catch(next);
+};

@@ -1,9 +1,10 @@
 export TOKEN_SECRET=caf7a40f87d342ac8735618a93b3a44d
 export SPOTIFY_CLIENT_ID=967d0ee071fc41c99fcd12d6dc5718c0
 export SPOTIFY_CLIENT_SECRET=caf7a40f87d342ac8735618a93b3a44d
-export SPOTIFY_AUTH_URI=https://accounts.spotify.com/authorize
+export SPOTIFY_AUTH_ENDPOINT=https://accounts.spotify.com/authorize
 export SPOTIFY_REDIRECT_URI=http://localhost:8087/api/v1/authSpotify/callback
 export TICKETMASTER_KEY=MwOoif9Ac5iZFedZG7xMW368oRbghDAz
 export TICKETMASTER_URL=https://app.ticketmaster.com/discovery/v2
+#export STORE_CONN_STR=mongodb://mongo:27017/test-server
 
 npm run start

@@ -1,42 +1,41 @@
 const express = require('express')
   router = express.Router();
 const { authHandler } = require('./lib'),
-  userController = require('./controllers/user'),
-  serviceController = require('./controllers/service'),
-  thirdPartyController = require('./controllers/third-party'),
-	eventController = require('./controllers/event'),
+  userControl = require('./controllers/user'),
+  serviceControl = require('./controllers/service'),
+  thirdPartyControl = require('./controllers/third-party'),
+	eventControl = require('./controllers/event'),
 	{ logger } = require('./utils');
 
-router.get('/authSpotify/callback', thirdPartyController.authSpotifyCb);
-router.get('/linkSpotify', thirdPartyController.linkSpotify);
+router.get('/healthcheck', serviceControl.healthCheck);
+router.get('/authSpotify/callback', thirdPartyControl.authSpotifyCb);
+router.get('/linkSpotify', thirdPartyControl.linkSpotify);
 
-router.post('/users/auth', userController.authUser);
+router.post('/username', userControl.checkUsername);
+router.post('/users/auth', userControl.authUser);
+router.route('/users')
+  .post(userControl.createUser);
 
 // routes that require authentication below
 router.all('*', authHandler);
 
-router.get('/healthcheck', serviceController.healthCheck);
-
 router.route('/users/:id')
-  .get(userController.getProfile)
-  .put(userController.updateUser);
+  .get(userControl.getProfile)
+  .put(userControl.updateUser);
 
-router.get('/users/:id/evalSpotify', thirdPartyController.evalSpotify);
+router.get('/users/:id/evalSpotify', thirdPartyControl.evalSpotify);
 
 router.route('/users/:id/events')
-  .get(eventController.getUserEvents);
-
-router.route('/users')
-  .post(userController.createUser);
+  .get(eventControl.getUserEvents);
 
 router.route('/thirdParty/:thirdPartyId')
-  .delete(thirdPartyController.deleteThirdParty)
-  .put(thirdPartyController.updateThirdParty);
+  .delete(thirdPartyControl.deleteThirdParty)
+  .put(thirdPartyControl.updateThirdParty);
 
 router.route('/events/:id')
-  .delete(eventController.deleteEvent);
+  .delete(eventControl.deleteEvent);
 
 router.route('/events')
-  .post(eventController.createEvent);
+  .post(eventControl.createEvent);
 
 module.exports = router;

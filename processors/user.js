@@ -10,3 +10,8 @@ module.exports.authUser = (creds) => User.authUser(creds);
 module.exports.updateUser = (id, updateInfo) => User.update(id, updateInfo);
 
 module.exports.getProfile = (id, accessList) => User.withProfile(id, accessList);
+
+module.exports.checkUsername = (username) => User.getByUsername(username)
+	.then(result => {
+		return result === null ? false : true;
+	});
