@@ -79,7 +79,7 @@ const auxModels = {
     sorter: 'factor'
   },
   thirdParties: {
-    fields: ''
+    fields: 'top10 source'
   }
 };
 
@@ -164,7 +164,7 @@ module.exports.createUser = (newUser) => {
   };
 
 	return promiser('create', newUser)
-		.then(created => exports.withProfile(created.username, 'all')
+		.then(created => exports.withProfile(created._id, 'all')
 			.then(withProfile => makeToken(withProfile)
 				.then(token => {
 					withProfile = withProfile.public();
@@ -174,18 +174,19 @@ module.exports.createUser = (newUser) => {
 			));
 };
 
-module.exports.authUser = (creds) => exports.withProfile(creds.username, 'all')
+module.exports.authUser = (creds) => exports.getByUsername(creds.username)
   .then((user) => {
-    if (!user) throw makeErr(`Invalid user: ${JSON.stringify(creds)}`, 400);
+    if (!user) throw makeErr(`Invalid login: ${JSON.stringify(creds)}`, 400);
     return user.comparePassword(creds.password)
       .then((resp) => {
 				if (!resp) throw makeErr(`Error authenticating with: ${JSON.stringify(creds)}`, 400);
 				return makeToken(user)
-					.then(token => {
-						user = user.public();
-						user.accessToken = token;
-						return user;
-					});
+					.then(token => exports.withProfile(user._id, 'all')
+						.then(withProfile => {
+							withProfile = withProfile.public();
+							withProfile.accessToken = token;
+							return withProfile;
+						}));
       });
   });
 
@@ -202,9 +203,9 @@ module.exports.update = (_id, updateInfo) => new Promise((resolve, reject) => {
 
 //TODO: change this to populate auxModels individually
 // too many I/O operations for one task
-module.exports.withProfile = (username, filter) => {
+module.exports.withProfile = (id, filter) => {
   let query, regx, prevIndex, arr;
-    query = User.findOne({ username });
+    query = User.findById(id);
     regx = RegExp(':', 'g');
 
   // TODO: does this block ?? because sync

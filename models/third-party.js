@@ -22,16 +22,8 @@ const promiser = require('../utils/query-promiser')(ThirdParty);
 
 module.exports.create = (options) => promiser('create', options);
 
-module.exports.getByUserId = (id) => promiser('find', { userId: id });
+module.exports.getByUserId = (id) => promiser('findOne', { userId: id });
 
-module.exports.update = (id, updateInfo, correlationId) => new Promise((resolve, reject) => {
-  // don't new there, remove
-  ThirdParty.findOneAndUpdate({ _id: id }, updateInfo, { new: true })
-    .then(res => {
-      logger.info(`Updated thirdPartyId ${id}, with: ${JSON.stringify(updateInfo)}, correlationId ${correlationId}`);
-      resolve(res);
-    })
-    .catch(reject);
-});
+module.exports.update = (id, updateInfo) => ThirdParty.findOneAndUpdate({ _id: id }, updateInfo, { upsert: true, useFindAndModify: false });
 
 module.exports.delete = (_id) => promiser('findOneAndRemove', { _id });

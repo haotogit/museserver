@@ -6,7 +6,11 @@ const user = require('../processors/user');
 const thirdPartyProcessor = require('../processors/third-party');
 const config = require('../config/config');
 const { responder, logger } = require('../utils');
-const { hashMaker, cryptoStrMaker } = require('../lib');
+const { 
+	hashMaker,
+	cryptoStrMaker,
+	spotifyResolver,
+} = require('../lib');
 
 module.exports.createThirdParty = (req, res, next) => {
   const newThirdParty = req.body;
@@ -47,10 +51,11 @@ module.exports.authSpotifyCb = (req, res, next) => {
 
 module.exports.evalSpotify = (req, res, next) => {
   const { id } = req.params;
-  const { spotifyAccessToken, spotifyId, spotifyRefreshToken } = req.query;
   const { correlationId } = req;
 
-  thirdPartyProcessor.evalSpotify(id, spotifyAccessToken, spotifyRefreshToken, spotifyId, correlationId)
+	// for some reason spotifReolver is undefined when requiring
+	// at processor so passing it down
+  thirdPartyProcessor.evalSpotify(id, spotifyResolver, correlationId)
     .then((resp) => responder(res, resp, correlationId))
     .catch(next);
 };

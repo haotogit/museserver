@@ -1,19 +1,18 @@
+const promise = require('bluebird'),
+  moment = require('moment'),
+	rp = require('request-promise');
+
 const ThirdParty = require('../models/third-party'),
   User = require('../models/user'),
   Artist = require('../models/artist'),
   Genre = require('../models/genre'),
   Track = require('../models/track'),
   config = require('../config/config'),
-	{ spotifyResolver } = require('../lib'),
-	{ upperCaser, logger } = require('../utils');
-
-const promise = require('bluebird'),
-  moment = require('moment');
-
-const rp = require('request-promise');
+	{ upperCaser, logger, makeErr } = require('../utils');
 
 module.exports.createThirdParty = (options) => ThirdParty.create(options)
-  .then((thirdParty) => User.withProfile(thirdParty.userId, 'thirdParties:'));
+	.then((thirdParty) => User.withProfile(thirdParty.userId, 'thirdParties:'))
+	.then(user => user.public())
 
 module.exports.updateThirdParty = function updateThirdParty(thirdPartyId, updateInfo, correlationId) {
   return ThirdParty.update(thirdPartyId, updateInfo, correlationId);
@@ -71,99 +70,92 @@ module.exports.authSpotifyCb = (userId, code, verifier) => {
     });
 };
 
-module.exports.evalSpotify = function evalSpotify(userId, spotifyAccessToken, spotifyRefreshToken, spotifyId, correlationId) {
-  let spotifyOpts, reqOpts,
-    domainsIndex;
-  let domains = {
-    artists: {
-      uri:'https://api.spotify.com/v1/me/top/artists?limit=50',
-      fields: [
-        'name',
-        'images',
-        'popularity',
-        'externalId',
-        'externalUri',
-        'genres'
-      ],
-      creator: (dataObj, userId) => {
-        const genres = dataObj.genres;
-        delete dataObj.genres;
-        // TODO: fix artists names to save as camel
-        // createOrUpdate to add factor as creates instead
-        return Artist.create(dataObj)
-          .then(res => promise.mapSeries(genres, (each, i) => {
-            let genreKey = /-|\s/.test(each) ? upperCaser(each) : each,
-              genre,
-              genreIndex,
-              artistIndex;
-            genre = {
-              name: genreKey,
-              userId: res.userId,
-              artistId: res._id
-            }
+module.exports.evalSpotify = function evalSpotify(userId, spotifyResolver, correlationId) {
+	return ThirdParty.getByUserId(userId)
+		.then(tp => {
+			if (!tp) throw makeErr(`User doesn't have third party connected`, 404);
+			let spotifyOpts, reqOpts,
+				domainsIndex;
+			let domains = {
+				artists: {
+					uri:'https://api.spotify.com/v1/me/top/artists?limit=50',
+					fields: [
+						'name',
+						'images',
+						'popularity',
+						'externalId',
+						'externalUri',
+						'genres'
+					],
+					creator: (dataObj, userId) => {
+						const genres = dataObj.genres;
+						delete dataObj.genres;
+						// TODO: fix artists names to save as camel
+						// createOrUpdate to add factor as creates instead
+						return Artist.create(dataObj)
+							.then(res => promise.mapSeries(genres, (each, i) => {
+								let genreKey = /-|\s/.test(each) ? upperCaser(each) : each,
+									genre,
+									genreIndex,
+									artistIndex;
+								genre = {
+									name: genreKey,
+									userId: res.userId,
+									artistId: res._id
+								}
 
-            // take this out eventually
-            return Genre.create(genre)
-              .catch(err => console.log('error creating genre', err.message));
-          }))
-          .catch(err => console.log('error creating artist', err.message))
-      }
-    },
-    tracks: {
-      uri: 'https://api.spotify.com/v1/me/top/tracks?limit=50',
-      fields: [
-        'name',
-        'popularity',
-        'externalId',
-        'externalUri'
-      ],
-      creator: (data) => Track.create(data)
-        .then(res => res._id)
-        .catch(err => console.log('error creating track', err.message))
-    }
-  };
+								// take this out eventually
+								return Genre.create(genre)
+									.catch(err => console.log('error creating genre', err.message));
+							}))
+							.catch(err => console.log('error creating artist', err.message))
+					}
+				},
+				tracks: {
+					uri: 'https://api.spotify.com/v1/me/top/tracks?limit=50',
+					fields: [
+						'name',
+						'popularity',
+						'externalId',
+						'externalUri'
+					],
+					creator: (data) => Track.create(data)
+					.then(res => res._id)
+					.catch(err => console.log('error creating track', err.message))
+				}
+			};
 
-  domainsIndex = Object.keys(domains);
-  reqOpts = [];
-  domainsIndex.forEach(each => {
-    reqOpts.push({
-      method: 'GET',
-      uri: domains[each].uri,
-      headers: {
-        Authorization: `Bearer ${spotifyAccessToken}`
-      },
-      json: true
-    });
-  });
+			domainsIndex = Object.keys(domains);
+			reqOpts = [];
+			domainsIndex.forEach(each => {
+				reqOpts.push({
+					method: 'GET',
+					uri: domains[each].uri,
+					headers: {
+						Authorization: `Bearer ${tp.accessToken}`
+					},
+					json: true
+				});
+			});
 
-  return ThirdParty.getByUserId(userId)
-    .then((thirdParty) => {
-      if (moment(thirdParty.lastEval).isBefore(moment().utc()), 'day') {
-        let newError = new Error(`No update, please retry after ${moment(thirdParty.lastEval).add(1, 'days').format()}`);
-        newError.statusCode = 429;
-        throw newError;
-      } else {
-        return spotifyResolver(reqOpts, spotifyId, spotifyAccessToken, spotifyRefreshToken, correlationId)
-          .then(data => {
-            return promise.mapSeries(data, (dataObj, i) => {
-              let currFields = domains[domainsIndex[i]].fields;
-              return promise.mapSeries(dataObj.items, (item, j) => {
-                let newObj = {};
-                let x = 0;
-                while(x < currFields.length) {
-                  newObj[currFields[x]] = item[currFields[x].replace(/external/, '').toLowerCase()];
-                  x++;
-                }
+			return spotifyResolver(reqOpts, tp._id, tp.accessToken, tp.refreshToken, correlationId)
+				.then(data => {
+					return promise.mapSeries(data, (dataObj, i) => {
+						let currFields = domains[domainsIndex[i]].fields;
+						return promise.mapSeries(dataObj.items, (item, j) => {
+							let newObj = {};
+							let x = 0;
+							while(x < currFields.length) {
+								newObj[currFields[x]] = item[currFields[x].replace(/external/, '').toLowerCase()];
+								x++;
+							}
 
-                newObj.userId = userId;
-                return domains[domainsIndex[i]].creator(newObj);
-              });
-            });
-          })
-          .then((result) => {
-            return exports.updateThirdParty(spotifyId, { lastEval: moment().utc().format() }, correlationId) 
-              .then(() => User.withProfile(userId, 'all'));
-          });    
-      }
-    });
+							newObj.userId = userId;
+							return domains[domainsIndex[i]].creator(newObj);
+						});
+					});
+				})
+				.then((result) => User.withProfile(userId, 'all')
+					.then(user => user.public()));
+		})
 };
