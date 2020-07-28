@@ -164,29 +164,28 @@ module.exports.createUser = (newUser) => {
   };
 
 	return promiser('create', newUser)
-		.then(user => user.public());
+		.then(created => exports.withProfile(created.username, 'all')
+			.then(withProfile => makeToken(withProfile)
+				.then(token => {
+					withProfile = withProfile.public();
+					withProfile.accessToken = token;
+					return withProfile;
+				})
+			));
 };
 
-module.exports.authUser = (creds) => promiser('findOne', { username: creds.username })
+module.exports.authUser = (creds) => exports.withProfile(creds.username, 'all')
   .then((user) => {
-    let accessToken;
-    if (!user) throw makeErr(`Invalid user: ${JSON.stringify(creds)}`, 404);
+    if (!user) throw makeErr(`Invalid user: ${JSON.stringify(creds)}`, 400);
     return user.comparePassword(creds.password)
       .then((resp) => {
-				if (!resp) throw makeErr(`Error authenticating with: ${JSON.stringify(creds)}`, 401);
-
-        return new Promise((resolve, reject) => {
-          jwt.sign(makeToken(user), config.app.tokenSecret, { expiresIn: '1h' }, (err, token) => {
-            if (err) throw makeErr(`Error authenticating with ${JSON.stringify(creds)}`);
-            accessToken = token;
-            resolve(user);
-          });
-        })
-        .then((currUser) => exports.withProfile(currUser._id, 'all'))
-        .then((userWithProfile) => {
-          userWithProfile.accessToken = accessToken;
-          return userWithProfile;
-        });
+				if (!resp) throw makeErr(`Error authenticating with: ${JSON.stringify(creds)}`, 400);
+				return makeToken(user)
+					.then(token => {
+						user = user.public();
+						user.accessToken = token;
+						return user;
+					});
       });
   });
 
@@ -203,9 +202,9 @@ module.exports.update = (_id, updateInfo) => new Promise((resolve, reject) => {
 
 //TODO: change this to populate auxModels individually
 // too many I/O operations for one task
-module.exports.withProfile = (_id, filter) => {
+module.exports.withProfile = (username, filter) => {
   let query, regx, prevIndex, arr;
-    query = User.findById(_id);
+    query = User.findOne({ username });
     regx = RegExp(':', 'g');
 
   // TODO: does this block ?? because sync
@@ -229,7 +228,7 @@ module.exports.withProfile = (_id, filter) => {
     }
 
     query
-      .then(user => resolve(makeProfile(user.public())))
+      .then(user => resolve(makeProfile(user)))
       .catch(reject);
   });
 };
