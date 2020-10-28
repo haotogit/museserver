@@ -4,5 +4,5 @@ Dockerfile*
 .git
 .gitignore
 docker*
-server-start-dev
+start-dev
 test
